@@ -62,6 +62,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -182,8 +183,8 @@ fun CalendarScreen(store: PlannerStore) {
 
     Box(Modifier.fillMaxSize()) {
         LazyColumn(
-            Modifier.fillMaxSize().padding(horizontal = 16.dp),
-            contentPadding = PaddingValues(top = 18.dp, bottom = 96.dp),
+            Modifier.fillMaxSize().padding(horizontal = LocalStyleTokens.current.screenPadding),
+            contentPadding = PaddingValues(top = 20.dp, bottom = 112.dp),
             verticalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)
         ) {
             item {
@@ -200,7 +201,8 @@ fun CalendarScreen(store: PlannerStore) {
         FloatingActionButton(
             onClick = { showAdd = true },
             modifier = Modifier.align(Alignment.BottomEnd).padding(LocalStyleTokens.current.cardPadding),
-            containerColor = MaterialTheme.colorScheme.primary
+            containerColor = Color(0xFFE8C56A),
+            contentColor = Color(0xFF0B1118)
         ) { Icon(Icons.Rounded.Add, contentDescription = "Добавить") }
     }
 
@@ -214,11 +216,18 @@ fun CalendarScreen(store: PlannerStore) {
 @Composable
 private fun CalendarHeader(selectedDate: LocalDate, mode: CalendarMode, onDateChange: (LocalDate) -> Unit) {
     val monthFormatter = remember { DateTimeFormatter.ofPattern("LLLL yyyy", Locale("ru")) }
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text("План дня", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, color = androidx.compose.ui.graphics.Color(0xFFE8C56A))
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text("План дня", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, color = Color(0xFFE8C56A))
         Text(
-            "Расписание · " + selectedDate.format(monthFormatter).replaceFirstChar { it.uppercase() },
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            selectedDate.dayOfWeek.getDisplayName(TextStyle.FULL, Locale("ru")).replaceFirstChar { it.uppercase() } +
+                ", " + selectedDate.dayOfMonth + " " + selectedDate.month.getDisplayName(TextStyle.FULL, Locale("ru")),
+            style = MaterialTheme.typography.titleMedium,
+            color = Color(0xFFD8E2EA)
+        )
+        Text(
+            selectedDate.format(monthFormatter).replaceFirstChar { it.uppercase() },
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color(0xFF8FA3B3)
         )
         val period = when (mode) {
             CalendarMode.Day -> "день"
@@ -249,7 +258,7 @@ private fun CalendarHeader(selectedDate: LocalDate, mode: CalendarMode, onDateCh
 @Composable
 private fun CalendarModeSelector(selected: CalendarMode, onSelect: (CalendarMode) -> Unit) {
     Row(
-        Modifier.fillMaxWidth().selectableGroup().clip(LocalStyleTokens.current.compactShape).background(MaterialTheme.colorScheme.surfaceVariant).padding(4.dp),
+        Modifier.fillMaxWidth().selectableGroup().clip(LocalStyleTokens.current.compactShape).background(Color(0xFF0E1A27)).padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         CalendarMode.entries.forEach { mode ->
@@ -258,14 +267,14 @@ private fun CalendarModeSelector(selected: CalendarMode, onSelect: (CalendarMode
                 modifier = Modifier.weight(1f).heightIn(min = 48.dp).selectable(selected = active, role = Role.Tab, onClick = { onSelect(mode) }),
                 shape = LocalStyleTokens.current.pillShape,
                 selected = active,
-                color = if (active) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+                color = if (active) Color(0xFF1B3044) else Color(0xFF0E1A27)
             ) {
                 Text(
                     mode.label,
                     modifier = Modifier.padding(vertical = 10.dp),
                     textAlign = TextAlign.Center,
                     fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal,
-                    color = if (active) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (active) Color(0xFFE8C56A) else Color(0xFF8FA3B3)
                 )
             }
         }
@@ -288,11 +297,11 @@ private fun DayCalendar(store: PlannerStore, date: LocalDate, onDateChange: (Loc
                     modifier = Modifier.weight(1f).clickable { onDateChange(day) },
                     shape = LocalStyleTokens.current.compactShape,
                     selected = active,
-                    color = if (active) androidx.compose.ui.graphics.Color(0xFF1E3B31) else androidx.compose.ui.graphics.Color(0xFF0E1A27)
+                    color = if (active) Color(0xFF1E3B31) else Color(0xFF0E1A27)
                 ) {
                     Column(Modifier.padding(vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(day.dayOfWeek.getDisplayName(TextStyle.SHORT, locale).take(2).uppercase(), style = MaterialTheme.typography.labelSmall)
-                        Text(day.dayOfMonth.toString(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(day.dayOfWeek.getDisplayName(TextStyle.SHORT, locale).take(2).uppercase(), style = MaterialTheme.typography.labelSmall, color = if (active) Color(0xFF78E6A8) else Color(0xFF8FA3B3))
+                        Text(day.dayOfMonth.toString(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = if (active) Color(0xFFF1F5F3) else Color(0xFFD8E2EA))
                     }
                 }
             }
