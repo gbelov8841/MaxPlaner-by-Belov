@@ -60,6 +60,32 @@ class HabitScheduleTest {
     }
 
     @Test
+    fun `best scheduled streak ignores rest days`() {
+        val schedule = HabitSchedule.weekdays(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY)
+        val dates = setOf(
+            "2026-08-31",
+            "2026-09-02",
+            "2026-09-04",
+            "2026-09-09"
+        )
+
+        assertEquals(3, bestScheduledHabitStreak(dates, schedule))
+    }
+
+    @Test
+    fun `best scheduled streak resets after missed scheduled day`() {
+        val schedule = HabitSchedule.weekdays(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY)
+        val dates = setOf(
+            "2026-08-31",
+            "2026-09-02",
+            "2026-09-07",
+            "2026-09-09"
+        )
+
+        assertEquals(2, bestScheduledHabitStreak(dates, schedule))
+    }
+
+    @Test
     fun `completion rate only counts scheduled opportunities`() {
         val schedule = HabitSchedule.weekdays(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY)
         val dates = setOf("2026-09-04", "2026-09-07", "2026-09-09")
@@ -82,5 +108,6 @@ class HabitScheduleTest {
 
         assertEquals(0, scheduledOpportunityCount(schedule, 7, thursday))
         assertEquals(0, scheduledCompletionRate(setOf("2026-09-10"), schedule, 7, thursday))
+        assertEquals(0, bestScheduledHabitStreak(setOf("2026-09-10"), schedule))
     }
 }
