@@ -55,7 +55,9 @@ fun TodayScreen(store: PlannerStore) {
     val done = plannedActions.count { it.isComplete(store.today) } + tasks.count { it.completed } + habits.count { today in it.completedDates }
     val total = tasks.size + habits.size + plannedActions.size
     val progress = if (total == 0) 0f else done.toFloat() / total
-    val keyTasks = tasks.filter { !it.completed }.take(3)
+    val keyTasks = tasks.filter { !it.completed }.take(2)
+    val keyTaskIds = keyTasks.map { it.id }.toSet()
+    val remainingTasks = tasks.filterNot { it.id in keyTaskIds }
     val greeting = when (java.time.LocalTime.now().hour) {
         in 5..11 -> "Доброе утро"
         in 12..17 -> "Добрый день"
@@ -174,12 +176,12 @@ fun TodayScreen(store: PlannerStore) {
         item { PrimeCategoryGrid() }
         if (total > 0) {
             item { SectionTitle("Сегодня по плану") }
-            items(tasks, key = { "task-${it.id}" }) { task ->
+            items(remainingTasks, key = { "task-${it.id}" }) { task ->
                 TodayTaskRow(store, task, false) { selectedTaskId = task.id }
             }
             items(habits, key = { "habit-${it.id}" }) { habit ->
                 PlannerCard(modifier = Modifier.fillMaxWidth(), shape = tokens.compactShape) {
-                    Row(Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 13.dp), verticalAlignment = Alignment.CenterVertically) {
                         CompletionButton(today in habit.completedDates, habit.title) { store.toggleHabitToday(habit.id) }
                         Column(Modifier.weight(1f)) {
                             Text(habit.title, style = MaterialTheme.typography.titleMedium)
@@ -229,7 +231,7 @@ private fun SectionTitle(title: String) {
 @Composable
 private fun TodayTaskRow(store: PlannerStore, task: com.belov.maxplaner.data.PlannerTask, prominent: Boolean, onOpen: () -> Unit) {
     PlannerCard(modifier = Modifier.fillMaxWidth().clickable(onClick = onOpen), shape = LocalStyleTokens.current.compactShape,
-        colors = CardDefaults.cardColors(containerColor = if (prominent) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface)) {
+        colors = CardDefaults.cardColors(containerColor = if (prominent) Color(0xFF162432) else Color(0xFF101C29))) {
         Row(Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
             CompletionButton(task.completed, task.title) { store.toggleTask(task.id) }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
