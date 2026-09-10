@@ -13,6 +13,13 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -49,6 +56,7 @@ import androidx.compose.material3.OutlinedTextField
 import com.belov.maxplaner.data.ActionCatalog
 import com.belov.maxplaner.data.ActionCategory
 import com.belov.maxplaner.data.PlannerStore
+import com.belov.maxplaner.data.TrackerType
 import com.belov.maxplaner.ui.components.CompletionButton
 import com.belov.maxplaner.ui.components.PlannerCard
 import com.belov.maxplaner.ui.components.TaskEditorDialog
@@ -155,11 +163,35 @@ internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit) {
                 item { OutlinedTextField(query, { query = it }, label = { Text("Найти действие") }, singleLine = true, modifier = Modifier.fillMaxWidth()) }
                 item {
                     TextButton(onClick = { showCategories = !showCategories }) { Text(if (showCategories) "Скрыть категории" else "Все категории · 11", maxLines = 1) }
-                    if (showCategories) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        CategoryRow("⭐", "Популярное", "Часто выбирают", category == null) { category = null; query = ""; showCategories = false }
-                        ActionCategory.entries.forEach { c ->
-                            val meta = categoryMeta(c)
-                            CategoryRow(meta.first, c.title.substringAfter(" "), meta.second, category == c) { category = c; query = ""; showCategories = false }
+                    AnimatedVisibility(
+                        visible = showCategories,
+                        enter = fadeIn() + expandVertically(),
+                        exit = fadeOut() + shrinkVertically()
+                    ) {
+                        Column(Modifier.animateContentSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            CategoryRow("⭐", "Популярное", "Часто выбирают", category == null) { category = null; query = ""; showCategories = false }
+                            ActionCategory.entries.forEach { c ->
+                                val meta = categoryMeta(c)
+                                CategoryRow(meta.first, c.title.substringAfter(" "), meta.second, category == c) { category = c; query = ""; showCategories = false }
+                            }
+                        }
+                    }
+                }
+                if (category != null) item {
+                    val meta = categoryMeta(category!!)
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .72f)
+                    ) {
+                        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(meta.first, style = MaterialTheme.typography.headlineMedium)
+                            Spacer(Modifier.width(12.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(category!!.title.substringAfter(" "), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                                Text(meta.second, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("${visible.size} готовых вариантов", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                            }
                         }
                     }
                 }
@@ -168,10 +200,14 @@ internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit) {
                 items(visible, key = { it.title }) { action ->
                     PlannerCard(modifier = Modifier.fillMaxWidth().clickable { selectedTitle = action.title }) {
                         Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
+                                Text(actionTypeIcon(action.type), modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp))
+                            }
+                            Spacer(Modifier.width(12.dp))
                             Column(Modifier.weight(1f)) {
                                 Text(action.title, fontWeight = FontWeight.SemiBold)
-                                Text(if (action.unit.isNotBlank()) action.unit else "Настроить и добавить", style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(actionTypeLabel(action), style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                             }
                             Icon(Icons.Rounded.ChevronRight, contentDescription = "Открыть", tint = MaterialTheme.colorScheme.primary)
                         }
@@ -216,4 +252,26 @@ private fun categoryMeta(category: ActionCategory): Pair<String, String> = when 
     ActionCategory.DIGITAL -> "📱" to "Экран и цифровые привычки"
     ActionCategory.FINANCE -> "💰" to "Бюджет и накопления"
     ActionCategory.HOME -> "🏠" to "Порядок и бытовые дела"
+}
+
+private fun actionTypeIcon(type: TrackerType): String = when (type) {
+    TrackerType.CHECK -> "✓"
+    TrackerType.COUNTER -> "#"
+    TrackerType.NUMBER -> "№"
+    TrackerType.DURATION -> "⏱"
+    TrackerType.STREAK -> "🔥"
+    TrackerType.SCALE -> "◐"
+    TrackerType.REDUCTION_GOAL -> "↓"
+    TrackerType.INCREASE_GOAL -> "↑"
+}
+
+private fun actionTypeLabel(action: ActionTemplate): String = when (action.type) {
+    TrackerType.CHECK -> "Отметить выполненным"
+    TrackerType.COUNTER -> if (action.unit.isNotBlank()) "Считать · ${action.unit}" else "Считать количество"
+    TrackerType.NUMBER -> if (action.unit.isNotBlank()) "Записать · ${action.unit}" else "Записать значение"
+    TrackerType.DURATION -> "По времени · ${action.target?.toInt() ?: action.defaultMinutes} мин"
+    TrackerType.STREAK -> "Серия дней"
+    TrackerType.SCALE -> "Оценка по шкале"
+    TrackerType.REDUCTION_GOAL -> "Постепенно уменьшать"
+    TrackerType.INCREASE_GOAL -> "Постепенно увеличивать"
 }
