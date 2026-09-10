@@ -145,10 +145,10 @@ internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit) {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 item { OutlinedTextField(query, { query = it }, label = { Text("Найти действие") }, singleLine = true, modifier = Modifier.fillMaxWidth()) }
                 item {
-                    TextButton(onClick = { showCategories = !showCategories }) { Text(if (showCategories) "Скрыть категории" else "Все категории · 11") }
+                    TextButton(onClick = { showCategories = !showCategories }) { Text(if (showCategories) "Скрыть категории" else "Все категории · 11", maxLines = 1) }
                     if (showCategories) FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        FilterChip(category == null, { category = null; query = "" }, label = { Text("⭐ Популярное") })
-                        ActionCategory.entries.forEach { c -> FilterChip(category == c, { category = c; query = ""; showCategories = false }, label = { Text(c.title) }) }
+                        FilterChip(category == null, { category = null; query = "" }, label = { Text("⭐ Популярное", maxLines = 1) })
+                        ActionCategory.entries.forEach { c -> FilterChip(category == c, { category = c; query = ""; showCategories = false }, label = { Text(c.title, maxLines = 1) }) }
                     }
                 }
                 item { OutlinedButton(onClick = { custom = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("+ Создать своё", maxLines = 1) } }
@@ -165,6 +165,6 @@ internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit) {
             }
         },
         confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Закрыть") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Закрыть", maxLines = 1) } }
     )
 }
