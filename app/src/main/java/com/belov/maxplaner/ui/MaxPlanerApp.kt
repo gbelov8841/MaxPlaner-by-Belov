@@ -34,7 +34,7 @@ import com.belov.maxplaner.data.PlannerStore
 import com.belov.maxplaner.ui.screens.AnalyticsScreen
 import com.belov.maxplaner.ui.screens.AppearanceScreen
 import com.belov.maxplaner.ui.screens.CalendarScreen
-import com.belov.maxplaner.ui.screens.HabitsScreen
+import com.belov.maxplaner.ui.screens.HabitsV2Screen
 import com.belov.maxplaner.ui.screens.TasksV2Screen
 import com.belov.maxplaner.ui.screens.TodayScreen
 import androidx.compose.material3.MaterialTheme
@@ -97,7 +97,7 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
                 composable("today") { TodayScreen(store) }
                 composable("calendar") { CalendarScreen(store) }
                 composable("tasks") { TasksV2Screen(store) }
-                composable("habits") { HabitsScreen(store) }
+                composable("habits") { HabitsV2Screen(store) }
                 composable("analytics") { AnalyticsScreen(store) }
                 composable("appearance") { AppearanceScreen(appearance) }
             }
