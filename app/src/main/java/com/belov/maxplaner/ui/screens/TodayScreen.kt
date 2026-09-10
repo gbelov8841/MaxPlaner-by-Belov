@@ -3,7 +3,6 @@ package com.belov.maxplaner.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -31,6 +30,7 @@ fun TodayScreen(store: PlannerStore) {
     val progress = if (progressParts == 0) 0f else (done + habitsDone).toFloat() / progressParts
     var showAdd by remember { mutableStateOf(false) }
     val formatter = DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale("ru"))
+    val shapes = MaterialTheme.shapes
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -43,7 +43,7 @@ fun TodayScreen(store: PlannerStore) {
                     Text("MaxPlaner", style = MaterialTheme.typography.titleLarge)
                     Text(date.format(formatter).replaceFirstChar { it.uppercase() }, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Surface(shape = RoundedCornerShape(18.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
+                Surface(shape = shapes.medium, color = MaterialTheme.colorScheme.surfaceVariant) {
                     Icon(Icons.Rounded.Person, null, Modifier.padding(11.dp))
                 }
             }
@@ -52,7 +52,7 @@ fun TodayScreen(store: PlannerStore) {
         item {
             Card(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                shape = RoundedCornerShape(30.dp)
+                shape = shapes.extraLarge
             ) {
                 Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -60,13 +60,13 @@ fun TodayScreen(store: PlannerStore) {
                             Text("Добрый день", color = MaterialTheme.colorScheme.onPrimaryContainer)
                             Text("Сделай главное.", style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
                         }
-                        Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.surface.copy(alpha = .45f)) {
+                        Surface(shape = shapes.large, color = MaterialTheme.colorScheme.surface.copy(alpha = .45f)) {
                             Text("${(progress * 100).toInt()}%", Modifier.padding(horizontal = 15.dp, vertical = 10.dp), fontWeight = FontWeight.Bold)
                         }
                     }
                     LinearProgressIndicator(
                         progress = { progress },
-                        modifier = Modifier.fillMaxWidth().height(7.dp).clip(RoundedCornerShape(50)),
+                        modifier = Modifier.fillMaxWidth().height(7.dp).clip(shapes.small),
                     )
                     Text("Прогресс дня", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = .75f))
                 }
@@ -83,9 +83,9 @@ fun TodayScreen(store: PlannerStore) {
 
         item {
             val focus = todayTasks.firstOrNull { it.isFocus && !it.completed }
-            Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+            Card(shape = shapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                 Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.primaryContainer) {
+                    Surface(shape = shapes.medium, color = MaterialTheme.colorScheme.primaryContainer) {
                         Icon(Icons.Rounded.TrackChanges, null, Modifier.padding(12.dp), tint = MaterialTheme.colorScheme.primary)
                     }
                     Spacer(Modifier.width(14.dp))
@@ -112,7 +112,7 @@ fun TodayScreen(store: PlannerStore) {
 
         if (todayTasks.isEmpty()) {
             item {
-                Card(shape = RoundedCornerShape(22.dp)) {
+                Card(shape = shapes.large) {
                     Column(Modifier.fillMaxWidth().padding(20.dp)) {
                         Text("День пока свободен", fontWeight = FontWeight.SemiBold)
                         Spacer(Modifier.height(5.dp))
@@ -122,7 +122,7 @@ fun TodayScreen(store: PlannerStore) {
             }
         } else {
             items(todayTasks, key = { it.id }) { task ->
-                Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                Card(shape = shapes.medium, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                     Row(Modifier.fillMaxWidth().padding(vertical = 9.dp, horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                         IconButton(onClick = { store.toggleTask(task.id) }) {
                             Icon(if (task.completed) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked, null,
@@ -148,7 +148,7 @@ fun TodayScreen(store: PlannerStore) {
 
 @Composable
 private fun PremiumMetric(icon: androidx.compose.ui.graphics.vector.ImageVector, value: String, label: String, modifier: Modifier = Modifier) {
-    Card(modifier, shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+    Card(modifier, shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Column(Modifier.padding(13.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
             Icon(icon, null, tint = MaterialTheme.colorScheme.primary)
             Text(value, style = MaterialTheme.typography.titleLarge)
@@ -165,7 +165,7 @@ private fun FocusTimer(onComplete: () -> Unit) {
         if (running && seconds > 0) { delay(1000); seconds-- }
         else if (running && seconds == 0) { running = false; onComplete() }
     }
-    Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+    Card(shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Rounded.Timer, null, tint = MaterialTheme.colorScheme.secondary)
             Spacer(Modifier.width(12.dp))
