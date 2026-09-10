@@ -69,12 +69,23 @@ fun TodayScreen(store: PlannerStore) {
         verticalArrangement = Arrangement.spacedBy(tokens.sectionSpacing)
     ) {
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(store.today.format(DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale("ru"))).replaceFirstChar { it.uppercase() },
-                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("PrimePlaner", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, color = Color(0xFFE8C56A))
-                Text("by Belov", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(greeting, style = MaterialTheme.typography.titleMedium)
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("PrimePlaner", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, color = Color(0xFFE8C56A))
+                        Text("by Belov", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Surface(shape = RoundedCornerShape(14.dp), color = Color(0xFF13283A)) {
+                        Icon(Icons.Rounded.NotificationsNone, contentDescription = "Уведомления", tint = Color(0xFF9EB5C6), modifier = Modifier.padding(10.dp).size(22.dp))
+                    }
+                }
+                Spacer(Modifier.height(4.dp))
+                Text(greeting, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
+                Text(
+                    store.today.format(DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale("ru"))).replaceFirstChar { it.uppercase() },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
         item {
@@ -282,13 +293,14 @@ private fun WeekStrip(today: java.time.LocalDate) {
             val date = start.plusDays(offset.toLong())
             val selected = date == today
             Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = if (selected) Color(0xFF234A3A) else Color(0xFF111D2A),
-                modifier = Modifier.width(42.dp)
+                shape = RoundedCornerShape(18.dp),
+                color = if (selected) Color(0xFF1E3B31) else Color(0xFF0E1A27),
+                modifier = Modifier.width(44.dp)
             ) {
                 Column(Modifier.padding(vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(date.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, Locale("ru")).take(2).uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(date.dayOfMonth.toString(), fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium, color = if (selected) Color(0xFF78E6A8) else MaterialTheme.colorScheme.onSurface)
+                    Text(date.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, Locale("ru")).take(2).uppercase(), style = MaterialTheme.typography.labelSmall, color = if (selected) Color(0xFF78E6A8) else MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(2.dp))
+                    Text(date.dayOfMonth.toString(), fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium, color = if (selected) Color(0xFFF1F5F3) else MaterialTheme.colorScheme.onSurface)
                 }
             }
         }
