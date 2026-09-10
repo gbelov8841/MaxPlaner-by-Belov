@@ -7,8 +7,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -48,11 +51,28 @@ fun AnalyticsV2Screen(store: PlannerStore) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)) {
                 Column {
-                    Text("Прогресс", style = MaterialTheme.typography.headlineLarge)
+                    Text("Прогресс", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold)
                     Text(
                         "Полезные цифры без давления",
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+
+                val overall = listOf(taskProgress, todayHabitProgress, weeklyHabitRate / 100f).average().toFloat()
+                PlannerCard(
+                    shape = LocalStyleTokens.current.heroShape,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+                ) {
+                    Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(Modifier.fillMaxWidth()) {
+                            Column(Modifier.weight(1f)) {
+                                Text("Общий ритм", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                                Text(progressMessage(overall), color = MaterialTheme.colorScheme.onTertiaryContainer)
+                            }
+                            Text("${(overall * 100).roundToInt()}%", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                        }
+                        PlannerProgressIndicator(progress = { overall.coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth())
+                    }
                 }
 
                 ProgressSummaryCard(
@@ -81,8 +101,8 @@ fun AnalyticsV2Screen(store: PlannerStore) {
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)
                 ) {
-                    MetricCard(store.focusMinutes.toString(), "минут фокуса", Modifier.weight(1f))
-                    MetricCard(bestHistoricalStreak.toString(), "лучшая серия", Modifier.weight(1f))
+                    MetricCard("⏱", store.focusMinutes.toString(), "минут фокуса", Modifier.weight(1f))
+                    MetricCard("🔥", bestHistoricalStreak.toString(), "лучшая серия", Modifier.weight(1f))
                 }
             }
         }
@@ -107,14 +127,22 @@ private fun ProgressSummaryCard(title: String, subtitle: String, progress: Float
 }
 
 @Composable
-private fun MetricCard(value: String, label: String, modifier: Modifier = Modifier) {
+private fun MetricCard(icon: String, value: String, label: String, modifier: Modifier = Modifier) {
     PlannerCard(modifier = modifier, shape = LocalStyleTokens.current.cardShape) {
         Column(
             Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding),
             verticalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)
         ) {
+            Text(icon, style = MaterialTheme.typography.titleLarge)
             Text(value, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
             Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
+}
+
+private fun progressMessage(progress: Float): String = when {
+    progress >= .85f -> "Отличный темп — удерживай ритм"
+    progress >= .6f -> "Хороший ритм — есть куда расти"
+    progress >= .3f -> "Ритм формируется — продолжай"
+    else -> "Начни с одного небольшого шага"
 }
