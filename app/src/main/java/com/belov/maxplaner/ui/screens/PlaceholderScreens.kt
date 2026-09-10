@@ -1,5 +1,10 @@
 package com.belov.maxplaner.ui.screens
 
+import com.belov.maxplaner.ui.theme.LocalStyleTokens
+import com.belov.maxplaner.ui.components.PlannerCard
+import com.belov.maxplaner.ui.components.PlannerSurface
+import com.belov.maxplaner.ui.components.PlannerProgressIndicator
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +20,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CheckCircle
@@ -24,15 +28,12 @@ import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.LocalFireDepartment
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -64,9 +65,9 @@ private enum class CalendarMode(val label: String) { Day("День"), Week("Не
 fun TasksScreen(store: PlannerStore) {
     var showAdd by remember { mutableStateOf(false) }
     LazyColumn(
-        Modifier.fillMaxSize().padding(horizontal = 20.dp),
+        Modifier.fillMaxSize().padding(horizontal = LocalStyleTokens.current.screenPadding),
         contentPadding = PaddingValues(vertical = 18.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)
     ) {
         item {
             Header("Задачи", "Все дела в одном месте")
@@ -76,7 +77,7 @@ fun TasksScreen(store: PlannerStore) {
         }
         val sorted = store.tasks.sortedWith(compareBy({ it.completed }, { -(it.priority) }))
         items(sorted, key = { it.id }) { task ->
-            Card(shape = RoundedCornerShape(20.dp)) {
+            PlannerCard(shape = LocalStyleTokens.current.cardShape) {
                 Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { store.toggleTask(task.id) }) {
                         Icon(if (task.completed) Icons.Rounded.CheckCircle else Icons.Rounded.Circle, null)
@@ -101,14 +102,24 @@ fun HabitsScreen(store: PlannerStore) {
     var showAdd by remember { mutableStateOf(false) }
     val today = LocalDate.now().toString()
     LazyColumn(
-        Modifier.fillMaxSize().padding(horizontal = 20.dp),
+        Modifier.fillMaxSize().padding(horizontal = LocalStyleTokens.current.screenPadding),
         contentPadding = PaddingValues(vertical = 18.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)
     ) {
         item {
             Header("Привычки", "Серии без давления и чувства вины")
             Button(onClick = { showAdd = true }, modifier = Modifier.padding(top = 12.dp)) {
                 Icon(Icons.Rounded.Add, null); Text("  Новая привычка")
+            }
+        }
+        if (store.habits.isEmpty()) {
+            item {
+                PlannerCard {
+                    Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding)) {
+                        Text("Маленький шаг каждый день", style = MaterialTheme.typography.titleMedium)
+                        Text("Добавь одну привычку, которую легко выполнить сегодня.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
             }
         }
         items(store.habits, key = { it.id }) { habit -> HabitCard(store, habit, today) }
@@ -121,12 +132,13 @@ fun HabitsScreen(store: PlannerStore) {
 @Composable
 private fun HabitCard(store: PlannerStore, habit: Habit, today: String) {
     val completed = habit.completedDates.contains(today)
-    Card(
+    PlannerCard(
         modifier = Modifier.fillMaxWidth().clickable { store.toggleHabitToday(habit.id) },
-        shape = RoundedCornerShape(20.dp),
+        shape = LocalStyleTokens.current.cardShape,
+        selected = completed,
         colors = CardDefaults.cardColors(containerColor = if (completed) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalAlignment = Alignment.CenterVertically) {
             Icon(if (completed) Icons.Rounded.CheckCircle else Icons.Rounded.Circle, null)
             Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                 Text(habit.title, style = MaterialTheme.typography.titleMedium)
@@ -150,7 +162,7 @@ fun CalendarScreen(store: PlannerStore) {
         LazyColumn(
             Modifier.fillMaxSize().padding(horizontal = 16.dp),
             contentPadding = PaddingValues(top = 18.dp, bottom = 96.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)
         ) {
             item {
                 CalendarHeader(selectedDate)
@@ -165,7 +177,7 @@ fun CalendarScreen(store: PlannerStore) {
         }
         FloatingActionButton(
             onClick = { showAdd = true },
-            modifier = Modifier.align(Alignment.BottomEnd).padding(22.dp),
+            modifier = Modifier.align(Alignment.BottomEnd).padding(LocalStyleTokens.current.cardPadding),
             containerColor = MaterialTheme.colorScheme.primary
         ) { Icon(Icons.Rounded.Add, contentDescription = "Добавить") }
     }
@@ -192,14 +204,15 @@ private fun CalendarHeader(selectedDate: LocalDate) {
 @Composable
 private fun CalendarModeSelector(selected: CalendarMode, onSelect: (CalendarMode) -> Unit) {
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surfaceVariant).padding(4.dp),
+        Modifier.fillMaxWidth().clip(LocalStyleTokens.current.compactShape).background(MaterialTheme.colorScheme.surfaceVariant).padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         CalendarMode.entries.forEach { mode ->
             val active = mode == selected
-            Surface(
+            PlannerSurface(
                 modifier = Modifier.weight(1f).clickable { onSelect(mode) },
-                shape = RoundedCornerShape(14.dp),
+                shape = LocalStyleTokens.current.pillShape,
+                selected = active,
                 color = if (active) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
             ) {
                 Text(
@@ -222,13 +235,14 @@ private fun DayCalendar(store: PlannerStore, date: LocalDate, onDateChange: (Loc
     val now = LocalTime.now()
     val today = LocalDate.now()
 
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             weekDays.forEach { day ->
                 val active = day == date
-                Surface(
+                PlannerSurface(
                     modifier = Modifier.weight(1f).clickable { onDateChange(day) },
-                    shape = RoundedCornerShape(18.dp),
+                    shape = LocalStyleTokens.current.compactShape,
+                    selected = active,
                     color = if (active) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
                 ) {
                     Column(Modifier.padding(vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -241,15 +255,15 @@ private fun DayCalendar(store: PlannerStore, date: LocalDate, onDateChange: (Loc
 
         val unscheduled = store.tasks.filter { it.dueDate == date.toString() && it.startMinutes == null }
         if (unscheduled.isNotEmpty()) {
-            Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            PlannerCard(shape = LocalStyleTokens.current.cardShape, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Без времени", fontWeight = FontWeight.SemiBold)
                     unscheduled.forEach { CalendarTaskRow(it) }
                 }
             }
         }
 
-        Card(shape = RoundedCornerShape(26.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+        PlannerCard(hero = true, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
             Column(Modifier.fillMaxWidth().padding(12.dp)) {
                 for (hour in 6..22) {
                     val hourStart = hour * 60
@@ -287,7 +301,7 @@ private fun TimeBlock(task: PlannerTask) {
         1 -> MaterialTheme.colorScheme.secondaryContainer
         else -> MaterialTheme.colorScheme.surfaceVariant
     }
-    Surface(shape = RoundedCornerShape(16.dp), color = container) {
+    PlannerSurface(shape = LocalStyleTokens.current.compactShape, color = container) {
         Column(Modifier.fillMaxWidth().padding(11.dp)) {
             Text(task.title, fontWeight = FontWeight.SemiBold)
             Text(time, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -311,12 +325,13 @@ private fun WeekCalendar(store: PlannerStore, selectedDate: LocalDate, onDateCha
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         days.forEach { day ->
             val tasks = store.tasks.filter { it.dueDate == day.toString() }.sortedBy { it.startMinutes ?: Int.MAX_VALUE }
-            Card(
+            PlannerCard(
                 modifier = Modifier.fillMaxWidth().clickable { onDateChange(day) },
-                shape = RoundedCornerShape(22.dp),
+                shape = LocalStyleTokens.current.cardShape,
+                selected = day == selectedDate,
                 colors = CardDefaults.cardColors(containerColor = if (day == selectedDate) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface)
             ) {
-                Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(day.dayOfWeek.getDisplayName(TextStyle.FULL, locale).replaceFirstChar { it.uppercase() }, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                         Text(day.dayOfMonth.toString(), style = MaterialTheme.typography.titleLarge)
@@ -364,9 +379,10 @@ private fun MonthCalendar(store: PlannerStore, selectedDate: LocalDate, onDateCh
                     } else {
                         val count = store.tasks.count { it.dueDate == day.toString() }
                         val active = day == selectedDate
-                        Surface(
+                        PlannerSurface(
                             modifier = Modifier.weight(1f).height(56.dp).clickable { onDateChange(day) },
-                            shape = RoundedCornerShape(14.dp),
+                            shape = LocalStyleTokens.current.pillShape,
+                            selected = active,
                             color = if (active) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
@@ -380,8 +396,8 @@ private fun MonthCalendar(store: PlannerStore, selectedDate: LocalDate, onDateCh
         }
 
         val selectedTasks = store.tasks.filter { it.dueDate == selectedDate.toString() }.sortedBy { it.startMinutes ?: Int.MAX_VALUE }
-        Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        PlannerCard(shape = LocalStyleTokens.current.cardShape, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+            Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("План на ${selectedDate.dayOfMonth} ${selectedDate.month.getDisplayName(TextStyle.FULL, locale)}", fontWeight = FontWeight.SemiBold)
                 if (selectedTasks.isEmpty()) Text("На этот день ничего не запланировано", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 selectedTasks.forEach { CalendarTaskRow(it) }
@@ -402,6 +418,9 @@ private fun CalendarTaskDialog(
     var durationText by remember { mutableStateOf("60") }
 
     AlertDialog(
+        shape = LocalStyleTokens.current.heroShape,
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = LocalStyleTokens.current.heroElevation,
         onDismissRequest = onDismiss,
         title = { Text("Новый блок времени") },
         text = {
@@ -439,15 +458,15 @@ fun AnalyticsScreen(store: PlannerStore) {
     val bestStreak = store.habits.maxOfOrNull { store.streak(it) } ?: 0
 
     LazyColumn(
-        Modifier.fillMaxSize().padding(horizontal = 20.dp),
+        Modifier.fillMaxSize().padding(horizontal = LocalStyleTokens.current.screenPadding),
         contentPadding = PaddingValues(vertical = 18.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)
     ) {
         item { Header("Прогресс", "Только полезные цифры, без визуального шума") }
         item { ProgressCard("Задачи", "$completed из $total выполнено", taskProgress) }
         item { ProgressCard("Привычки сегодня", "${(habitProgress * 100).toInt()}% выполнено", habitProgress) }
         item {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)) {
                 StatCard("${store.focusMinutes}", "минут фокуса", Modifier.weight(1f))
                 StatCard("$bestStreak", "лучшая серия", Modifier.weight(1f))
             }
@@ -465,19 +484,19 @@ private fun Header(title: String, subtitle: String) {
 
 @Composable
 private fun ProgressCard(title: String, subtitle: String, progress: Float) {
-    Card(shape = RoundedCornerShape(22.dp)) {
-        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    PlannerCard(shape = LocalStyleTokens.current.cardShape) {
+        Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(title, style = MaterialTheme.typography.titleLarge)
             Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
+            PlannerProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
         }
     }
 }
 
 @Composable
 private fun StatCard(value: String, label: String, modifier: Modifier = Modifier) {
-    Card(modifier, shape = RoundedCornerShape(20.dp)) {
-        Column(Modifier.padding(18.dp)) {
+    PlannerCard(modifier, shape = LocalStyleTokens.current.cardShape) {
+        Column(Modifier.padding(LocalStyleTokens.current.cardPadding)) {
             Text(value, style = MaterialTheme.typography.headlineMedium)
             Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -488,6 +507,9 @@ private fun StatCard(value: String, label: String, modifier: Modifier = Modifier
 private fun SimpleNameDialog(title: String, hint: String, onDismiss: () -> Unit, onSave: (String) -> Unit) {
     var text by remember { mutableStateOf("") }
     AlertDialog(
+        shape = LocalStyleTokens.current.heroShape,
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = LocalStyleTokens.current.heroElevation,
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = { OutlinedTextField(text, { text = it }, label = { Text(hint) }, singleLine = true) },

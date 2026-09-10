@@ -1,5 +1,10 @@
 package com.belov.maxplaner.ui.screens
 
+import com.belov.maxplaner.ui.theme.LocalStyleTokens
+import com.belov.maxplaner.ui.components.PlannerCard
+import com.belov.maxplaner.ui.components.PlannerSurface
+import com.belov.maxplaner.ui.components.PlannerProgressIndicator
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowBack
@@ -20,15 +24,12 @@ import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -62,9 +63,9 @@ fun TasksV2Screen(store: PlannerStore) {
     }
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
+        modifier = Modifier.fillMaxSize().padding(horizontal = LocalStyleTokens.current.screenPadding),
         contentPadding = PaddingValues(vertical = 18.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)
     ) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -76,16 +77,26 @@ fun TasksV2Screen(store: PlannerStore) {
                 }
             }
         }
+        if (store.tasks.isEmpty()) {
+            item {
+                PlannerCard {
+                    Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding)) {
+                        Text("Начни с одного важного дела", style = MaterialTheme.typography.titleMedium)
+                        Text("Нажми «Быстро добавить», чтобы освободить голову и записать задачу.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+        }
         val sorted = store.tasks.sortedWith(compareBy({ it.completed }, { -it.priority }))
         items(sorted, key = { it.id }) { task ->
-            Card(
+            PlannerCard(
                 modifier = Modifier.fillMaxWidth().clickable { selectedTaskId = task.id },
-                shape = RoundedCornerShape(22.dp),
+                shape = LocalStyleTokens.current.cardShape,
                 colors = CardDefaults.cardColors(
                     containerColor = if (task.completed) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface
                 )
             ) {
-                Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { store.toggleTask(task.id) }) {
                         Icon(if (task.completed) Icons.Rounded.CheckCircle else Icons.Rounded.Circle, null)
                     }
@@ -130,9 +141,9 @@ private fun TaskDetailScreen(store: PlannerStore, task: PlannerTask, onBack: () 
     val timeText = task.startMinutes?.let { "%02d:%02d • %d мин".format(it / 60, it % 60, task.durationMinutes) } ?: "Время не задано"
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
+        modifier = Modifier.fillMaxSize().padding(horizontal = LocalStyleTokens.current.screenPadding),
         contentPadding = PaddingValues(vertical = 18.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)
     ) {
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -141,8 +152,8 @@ private fun TaskDetailScreen(store: PlannerStore, task: PlannerTask, onBack: () 
             }
         }
         item {
-            Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
-                Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            PlannerCard(hero = true, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+                Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(task.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     Text("$dateText • $timeText", color = MaterialTheme.colorScheme.onPrimaryContainer)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -155,13 +166,13 @@ private fun TaskDetailScreen(store: PlannerStore, task: PlannerTask, onBack: () 
         item { InfoSection("Повтор", task.recurrence) }
         item { InfoSection("Заметки", task.notes.ifBlank { "Заметок пока нет" }) }
         item {
-            Card(shape = RoundedCornerShape(24.dp)) {
-                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            PlannerCard(shape = LocalStyleTokens.current.cardShape) {
+                Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("Чек-лист", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                         Text("$done/${task.checklist.size}", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    if (task.checklist.isNotEmpty()) LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
+                    if (task.checklist.isNotEmpty()) PlannerProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
                     task.checklist.forEach { item ->
                         Row(
                             modifier = Modifier.fillMaxWidth().clickable { store.toggleChecklistItem(task.id, item.id) }.padding(vertical = 4.dp),
@@ -211,15 +222,15 @@ private fun TaskDetailScreen(store: PlannerStore, task: PlannerTask, onBack: () 
 
 @Composable
 private fun InfoChip(text: String) {
-    Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surface.copy(alpha = 0.55f)) {
+    PlannerSurface(shape = LocalStyleTokens.current.pillShape, color = MaterialTheme.colorScheme.surface.copy(alpha = LocalStyleTokens.current.insetSurfaceAlpha)) {
         Text(text, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp), style = MaterialTheme.typography.labelMedium)
     }
 }
 
 @Composable
 private fun InfoSection(title: String, value: String) {
-    Card(shape = RoundedCornerShape(22.dp)) {
-        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    PlannerCard(shape = LocalStyleTokens.current.cardShape) {
+        Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
             Text(value, style = MaterialTheme.typography.bodyLarge)
         }
@@ -238,6 +249,9 @@ private fun AddRichTaskDialog(onDismiss: () -> Unit, onSave: (String, String, St
     var notes by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("Личное") }
     AlertDialog(
+        shape = LocalStyleTokens.current.heroShape,
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = LocalStyleTokens.current.heroElevation,
         onDismissRequest = onDismiss,
         title = { Text("Новая задача") },
         text = {
@@ -259,6 +273,9 @@ private fun EditTaskDialog(task: PlannerTask, onDismiss: () -> Unit, onSave: (Pl
     var category by remember(task.id) { mutableStateOf(task.category) }
     var recurrence by remember(task.id) { mutableStateOf(task.recurrence) }
     AlertDialog(
+        shape = LocalStyleTokens.current.heroShape,
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = LocalStyleTokens.current.heroElevation,
         onDismissRequest = onDismiss,
         title = { Text("Изменить задачу") },
         text = {

@@ -1,5 +1,10 @@
 package com.belov.maxplaner.ui.screens
 
+import com.belov.maxplaner.ui.theme.LocalStyleTokens
+import com.belov.maxplaner.ui.components.PlannerCard
+import com.belov.maxplaner.ui.components.PlannerSurface
+import com.belov.maxplaner.ui.components.PlannerProgressIndicator
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,11 +24,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -59,15 +62,16 @@ fun AppearanceScreen(appearance: AppearanceStore) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 MaxPlanerStyles.forEachIndexed { index, style ->
                     val selected = appearance.styleId == style.id
-                    Card(
+                    PlannerCard(
                         modifier = Modifier.fillMaxWidth().clickable { appearance.selectStyle(style.id) },
+                        selected = selected,
                         colors = CardDefaults.cardColors(
                             containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
                         ),
-                        shape = MaterialTheme.shapes.large
+                        shape = LocalStyleTokens.current.cardShape
                     ) {
                         Row(
-                            Modifier.fillMaxWidth().padding(16.dp),
+                            Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(Modifier.weight(1f)) {
@@ -111,36 +115,36 @@ fun AppearanceScreen(appearance: AppearanceStore) {
 
 @Composable
 private fun CurrentStylePreview(appearance: AppearanceStore) {
-    Card(
+    PlannerCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraLarge,
+        hero = true,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
-        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)) {
             Text("MaxPlaner", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
             Text(appearance.style.name, color = MaterialTheme.colorScheme.onPrimaryContainer)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.primary) {
+                PlannerSurface(shape = LocalStyleTokens.current.compactShape, color = MaterialTheme.colorScheme.primary) {
                     Text("Сегодня", modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp), color = MaterialTheme.colorScheme.onPrimary)
                 }
-                Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surface) {
+                PlannerSurface(shape = LocalStyleTokens.current.compactShape, color = MaterialTheme.colorScheme.surface) {
                     Text("6 из 8 задач", modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp))
                 }
             }
-            Text("${appearance.palette.name} · 78% выполнено", fontWeight = FontWeight.Medium)
+            Text("${appearance.palette.name} · Пример прогресса", fontWeight = FontWeight.Medium)
+            PlannerProgressIndicator(progress = { .78f }, modifier = Modifier.fillMaxWidth())
         }
     }
 }
 
 @Composable
 private fun PaletteCard(palette: PaletteOption, selected: Boolean, onClick: () -> Unit) {
-    val borderColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
-    Card(
+    PlannerCard(
         modifier = Modifier
             .size(width = 152.dp, height = 118.dp)
-            .border(2.dp, borderColor, MaterialTheme.shapes.large)
             .clickable(onClick = onClick),
-        shape = MaterialTheme.shapes.large,
+        shape = LocalStyleTokens.current.cardShape,
+        selected = selected,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {

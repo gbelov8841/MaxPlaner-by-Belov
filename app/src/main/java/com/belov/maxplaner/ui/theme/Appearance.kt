@@ -111,6 +111,7 @@ class AppearanceStore(context: Context) {
         get() = style.palettes.firstOrNull { it.id == paletteId } ?: style.palettes.first()
 
     fun selectStyle(id: String) {
+        if (id == styleId) return
         val next = MaxPlanerStyles.firstOrNull { it.id == id } ?: return
         styleId = next.id
         paletteId = next.palettes.first().id

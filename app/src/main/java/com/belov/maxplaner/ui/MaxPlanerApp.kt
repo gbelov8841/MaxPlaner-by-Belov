@@ -31,6 +31,8 @@ import com.belov.maxplaner.ui.screens.CalendarScreen
 import com.belov.maxplaner.ui.screens.HabitsScreen
 import com.belov.maxplaner.ui.screens.TasksV2Screen
 import com.belov.maxplaner.ui.screens.TodayScreen
+import androidx.compose.material3.MaterialTheme
+import com.belov.maxplaner.ui.theme.LocalStyleTokens
 import com.belov.maxplaner.ui.theme.AppearanceStore
 
 private data class Tab(val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
@@ -54,7 +56,10 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surface,
+                tonalElevation = LocalStyleTokens.current.navigationElevation
+            ) {
                 tabs.forEach { tab ->
                     NavigationBarItem(
                         selected = route == tab.route,

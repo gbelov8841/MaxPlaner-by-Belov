@@ -1,5 +1,10 @@
 package com.belov.maxplaner.ui.screens
 
+import com.belov.maxplaner.ui.theme.LocalStyleTokens
+import com.belov.maxplaner.ui.components.PlannerCard
+import com.belov.maxplaner.ui.components.PlannerSurface
+import com.belov.maxplaner.ui.components.PlannerProgressIndicator
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,7 +14,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.belov.maxplaner.data.PlannerStore
@@ -30,12 +34,11 @@ fun TodayScreen(store: PlannerStore) {
     val progress = if (progressParts == 0) 0f else (done + habitsDone).toFloat() / progressParts
     var showAdd by remember { mutableStateOf(false) }
     val formatter = DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale("ru"))
-    val shapes = MaterialTheme.shapes
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 20.dp, bottom = 28.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        contentPadding = PaddingValues(start = LocalStyleTokens.current.screenPadding, end = LocalStyleTokens.current.screenPadding, top = 20.dp, bottom = 28.dp),
+        verticalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)
     ) {
         item {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -43,30 +46,30 @@ fun TodayScreen(store: PlannerStore) {
                     Text("MaxPlaner", style = MaterialTheme.typography.titleLarge)
                     Text(date.format(formatter).replaceFirstChar { it.uppercase() }, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Surface(shape = shapes.medium, color = MaterialTheme.colorScheme.surfaceVariant) {
+                PlannerSurface(shape = LocalStyleTokens.current.iconShape, color = MaterialTheme.colorScheme.surfaceVariant) {
                     Icon(Icons.Rounded.Person, null, Modifier.padding(11.dp))
                 }
             }
         }
 
         item {
-            Card(
+            PlannerCard(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                shape = shapes.extraLarge
+                hero = true
             ) {
-                Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Column(Modifier.padding(LocalStyleTokens.current.cardPadding), verticalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text("Добрый день", color = MaterialTheme.colorScheme.onPrimaryContainer)
                             Text("Сделай главное.", style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
                         }
-                        Surface(shape = shapes.large, color = MaterialTheme.colorScheme.surface.copy(alpha = .45f)) {
+                        PlannerSurface(shape = LocalStyleTokens.current.cardShape, color = MaterialTheme.colorScheme.surface.copy(alpha = LocalStyleTokens.current.insetSurfaceAlpha)) {
                             Text("${(progress * 100).toInt()}%", Modifier.padding(horizontal = 15.dp, vertical = 10.dp), fontWeight = FontWeight.Bold)
                         }
                     }
-                    LinearProgressIndicator(
+                    PlannerProgressIndicator(
                         progress = { progress },
-                        modifier = Modifier.fillMaxWidth().height(7.dp).clip(shapes.small),
+                        modifier = Modifier.fillMaxWidth(),
                     )
                     Text("Прогресс дня", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = .75f))
                 }
@@ -83,9 +86,9 @@ fun TodayScreen(store: PlannerStore) {
 
         item {
             val focus = todayTasks.firstOrNull { it.isFocus && !it.completed }
-            Card(shape = shapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Surface(shape = shapes.medium, color = MaterialTheme.colorScheme.primaryContainer) {
+            PlannerCard(shape = LocalStyleTokens.current.cardShape, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                Row(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalAlignment = Alignment.CenterVertically) {
+                    PlannerSurface(shape = LocalStyleTokens.current.iconShape, color = MaterialTheme.colorScheme.primaryContainer) {
                         Icon(Icons.Rounded.TrackChanges, null, Modifier.padding(12.dp), tint = MaterialTheme.colorScheme.primary)
                     }
                     Spacer(Modifier.width(14.dp))
@@ -112,8 +115,8 @@ fun TodayScreen(store: PlannerStore) {
 
         if (todayTasks.isEmpty()) {
             item {
-                Card(shape = shapes.large) {
-                    Column(Modifier.fillMaxWidth().padding(20.dp)) {
+                PlannerCard(shape = LocalStyleTokens.current.cardShape) {
+                    Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding)) {
                         Text("День пока свободен", fontWeight = FontWeight.SemiBold)
                         Spacer(Modifier.height(5.dp))
                         Text("Добавь несколько действительно важных дел — MaxPlaner поможет не перегружать день.", color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -122,7 +125,7 @@ fun TodayScreen(store: PlannerStore) {
             }
         } else {
             items(todayTasks, key = { it.id }) { task ->
-                Card(shape = shapes.medium, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                PlannerCard(shape = LocalStyleTokens.current.compactShape, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                     Row(Modifier.fillMaxWidth().padding(vertical = 9.dp, horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                         IconButton(onClick = { store.toggleTask(task.id) }) {
                             Icon(if (task.completed) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked, null,
@@ -148,7 +151,7 @@ fun TodayScreen(store: PlannerStore) {
 
 @Composable
 private fun PremiumMetric(icon: androidx.compose.ui.graphics.vector.ImageVector, value: String, label: String, modifier: Modifier = Modifier) {
-    Card(modifier, shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+    PlannerCard(modifier, shape = LocalStyleTokens.current.compactShape, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Column(Modifier.padding(13.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
             Icon(icon, null, tint = MaterialTheme.colorScheme.primary)
             Text(value, style = MaterialTheme.typography.titleLarge)
@@ -165,8 +168,8 @@ private fun FocusTimer(onComplete: () -> Unit) {
         if (running && seconds > 0) { delay(1000); seconds-- }
         else if (running && seconds == 0) { running = false; onComplete() }
     }
-    Card(shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+    PlannerCard(shape = LocalStyleTokens.current.cardShape, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Row(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Rounded.Timer, null, tint = MaterialTheme.colorScheme.secondary)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
@@ -184,6 +187,9 @@ private fun FocusTimer(onComplete: () -> Unit) {
 fun AddTaskDialog(title: String = "Новая задача", onDismiss: () -> Unit, onSave: (String) -> Unit) {
     var text by remember { mutableStateOf("") }
     AlertDialog(
+        shape = LocalStyleTokens.current.heroShape,
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = LocalStyleTokens.current.heroElevation,
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = { OutlinedTextField(value = text, onValueChange = { text = it }, label = { Text("Что нужно сделать?") }, singleLine = true) },
