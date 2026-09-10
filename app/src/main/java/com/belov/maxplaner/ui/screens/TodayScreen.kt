@@ -81,14 +81,43 @@ fun TodayScreen(store: PlannerStore) {
             WeekStrip(store.today)
         }
         item {
-            PlannerCard(hero = true, colors = CardDefaults.cardColors(containerColor = Color(0xFF14283A))) {
-                Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(if (total == 0) "Каким будет твой день?" else if (done == total) "Всё на сегодня выполнено" else "Сегодня выполнено",
-                        style = MaterialTheme.typography.titleLarge)
-                    if (total > 0) {
-                        Text("$done из $total", style = MaterialTheme.typography.headlineLarge)
-                        PlannerProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
-                    } else Text("Выбери готовое действие или начни со своего дела.", style = MaterialTheme.typography.bodyLarge)
+            PlannerCard(hero = true, colors = CardDefaults.cardColors(containerColor = Color(0xFF102437))) {
+                Row(
+                    Modifier.fillMaxWidth().padding(tokens.cardPadding),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Сегодня", style = MaterialTheme.typography.labelLarge, color = Color(0xFF8CA7BC))
+                        Text(
+                            if (total == 0) "Собери свой день" else if (done == total) "План выполнен" else "Держим ритм",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            if (total == 0) "Добавь первое действие" else "$done из $total выполнено",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (total > 0) {
+                            PlannerProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
+                        }
+                    }
+                    Box(contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(
+                            progress = { if (total == 0) 0f else progress },
+                            modifier = Modifier.size(72.dp),
+                            strokeWidth = 6.dp,
+                            color = Color(0xFFE8C56A),
+                            trackColor = Color(0xFF24384A)
+                        )
+                        Text(
+                            if (total == 0) "0%" else "${(progress * 100).toInt()}%",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFE8C56A)
+                        )
+                    }
                 }
             }
         }
@@ -99,19 +128,34 @@ fun TodayScreen(store: PlannerStore) {
             }
         }
         item {
-            PlannerCard(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                Column(Modifier.fillMaxWidth().padding(tokens.cardPadding).animateContentSize(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Быстрое добавление", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Text("Выбери готовое действие или создай своё.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Button(onClick = { showCatalog = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), shape = tokens.pillShape) {
-                        Icon(Icons.Rounded.AutoAwesome, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Выбрать готовое", maxLines = 1)
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                SectionTitle("Быстрое добавление")
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Surface(
+                        modifier = Modifier.weight(1f).clickable { showCatalog = true },
+                        shape = RoundedCornerShape(20.dp),
+                        color = Color(0xFF13283A)
+                    ) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Surface(shape = RoundedCornerShape(14.dp), color = Color(0xFF5CA8FF).copy(alpha = .14f)) {
+                                Icon(Icons.Rounded.AutoAwesome, null, tint = Color(0xFF78B7FF), modifier = Modifier.padding(10.dp).size(24.dp))
+                            }
+                            Text("Готовое", fontWeight = FontWeight.SemiBold)
+                            Text("Из каталога", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
-                    OutlinedButton(onClick = { showAdd = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), shape = tokens.pillShape) {
-                        Icon(Icons.Rounded.Edit, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Создать своё", maxLines = 1)
+                    Surface(
+                        modifier = Modifier.weight(1f).clickable { showAdd = true },
+                        shape = RoundedCornerShape(20.dp),
+                        color = Color(0xFF182535)
+                    ) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Surface(shape = RoundedCornerShape(14.dp), color = Color(0xFFE8C56A).copy(alpha = .12f)) {
+                                Icon(Icons.Rounded.Add, null, tint = Color(0xFFE8C56A), modifier = Modifier.padding(10.dp).size(24.dp))
+                            }
+                            Text("Создать своё", fontWeight = FontWeight.SemiBold)
+                            Text("Своя цель", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
                 }
             }
@@ -163,9 +207,11 @@ fun TodayScreen(store: PlannerStore) {
 
 @Composable
 private fun SectionTitle(title: String) {
-    Column(modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 2.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f))
     }
 }
 
@@ -265,10 +311,10 @@ private fun PrimeCategoryGrid() {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 row.forEach { (title, icon, tint) ->
                     Surface(
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(20.dp),
-                        color = Color(0xFF111D2A),
-                        tonalElevation = 2.dp
+                        modifier = Modifier.weight(1f).heightIn(min = 108.dp),
+                        shape = RoundedCornerShape(22.dp),
+                        color = Color(0xFF101C29),
+                        tonalElevation = 1.dp
                     ) {
                         Column(Modifier.padding(vertical = 16.dp, horizontal = 8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Surface(shape = RoundedCornerShape(14.dp), color = tint.copy(alpha = .14f)) {
