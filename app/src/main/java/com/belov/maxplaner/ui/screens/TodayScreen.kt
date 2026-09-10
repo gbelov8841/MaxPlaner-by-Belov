@@ -15,6 +15,7 @@ import com.belov.maxplaner.ui.components.PlannerProgressIndicator
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -26,6 +27,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.belov.maxplaner.data.PlannerStore
 import com.belov.maxplaner.data.FocusMode
@@ -70,11 +72,16 @@ fun TodayScreen(store: PlannerStore) {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(store.today.format(DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale("ru"))).replaceFirstChar { it.uppercase() },
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(greeting, style = MaterialTheme.typography.headlineMedium)
+                Text("PrimePlaner", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, color = Color(0xFFE8C56A))
+                Text("by Belov", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(greeting, style = MaterialTheme.typography.titleMedium)
             }
         }
         item {
-            PlannerCard(hero = true, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+            WeekStrip(store.today)
+        }
+        item {
+            PlannerCard(hero = true, colors = CardDefaults.cardColors(containerColor = Color(0xFF14283A))) {
                 Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(if (total == 0) "Каким будет твой день?" else if (done == total) "Всё на сегодня выполнено" else "Сегодня выполнено",
                         style = MaterialTheme.typography.titleLarge)
@@ -94,8 +101,8 @@ fun TodayScreen(store: PlannerStore) {
         item {
             PlannerCard(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                 Column(Modifier.fillMaxWidth().padding(tokens.cardPadding).animateContentSize(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Добавить в день", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Text("Готовое действие — быстрее. Своё — когда нужен особый вариант.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Быстрое добавление", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text("Выбери готовое действие или создай своё.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Button(onClick = { showCatalog = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), shape = tokens.pillShape) {
                         Icon(Icons.Rounded.AutoAwesome, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
@@ -109,6 +116,7 @@ fun TodayScreen(store: PlannerStore) {
                 }
             }
         }
+        item { PrimeCategoryGrid() }
         if (total > 0) {
             item { SectionTitle("Сегодня по плану") }
             items(tasks, key = { "task-${it.id}" }) { task ->
@@ -215,6 +223,62 @@ private fun FocusTimer(store: PlannerStore) {
                     FocusMode.Completed -> "Ещё 25 минут"
                     FocusMode.Idle -> "Начать фокус"
                 })
+            }
+        }
+    }
+}
+
+@Composable
+private fun WeekStrip(today: java.time.LocalDate) {
+    val start = today.minusDays(3)
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        repeat(7) { offset ->
+            val date = start.plusDays(offset.toLong())
+            val selected = date == today
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = if (selected) Color(0xFF234A3A) else Color(0xFF111D2A),
+                modifier = Modifier.width(42.dp)
+            ) {
+                Column(Modifier.padding(vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(date.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, Locale("ru")).take(2).uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(date.dayOfMonth.toString(), fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium, color = if (selected) Color(0xFF78E6A8) else MaterialTheme.colorScheme.onSurface)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PrimeCategoryGrid() {
+    val categories = listOf(
+        Triple("Здоровье", Icons.Rounded.Favorite, Color(0xFF52D98B)),
+        Triple("Спорт", Icons.Rounded.FitnessCenter, Color(0xFF5CA8FF)),
+        Triple("Развитие", Icons.Rounded.Psychology, Color(0xFFB98AFF)),
+        Triple("Работа", Icons.Rounded.Work, Color(0xFFFFB45C)),
+        Triple("Общение", Icons.Rounded.Groups, Color(0xFFFF7FA8)),
+        Triple("Финансы", Icons.Rounded.AccountBalanceWallet, Color(0xFFE8C56A))
+    )
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        SectionTitle("Категории")
+        categories.chunked(3).forEach { row ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                row.forEach { (title, icon, tint) ->
+                    Surface(
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(20.dp),
+                        color = Color(0xFF111D2A),
+                        tonalElevation = 2.dp
+                    ) {
+                        Column(Modifier.padding(vertical = 16.dp, horizontal = 8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Surface(shape = RoundedCornerShape(14.dp), color = tint.copy(alpha = .14f)) {
+                                Icon(icon, null, tint = tint, modifier = Modifier.padding(10.dp).size(26.dp))
+                            }
+                            Text(title, style = MaterialTheme.typography.labelMedium, maxLines = 1)
+                        }
+                    }
+                }
+                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
             }
         }
     }
