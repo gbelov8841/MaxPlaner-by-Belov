@@ -7,6 +7,7 @@ import com.belov.maxplaner.ui.components.PlannerProgressIndicator
 import com.belov.maxplaner.ui.theme.LocalStyleTokens
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
