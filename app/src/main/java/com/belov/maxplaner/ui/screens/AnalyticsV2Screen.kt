@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import com.belov.maxplaner.data.PlannerStore
+import com.belov.maxplaner.data.bestScheduledHabitStreak
 import com.belov.maxplaner.ui.components.PlannerCard
 import com.belov.maxplaner.ui.components.PlannerProgressIndicator
 import com.belov.maxplaner.ui.theme.LocalStyleTokens
@@ -35,7 +36,9 @@ fun AnalyticsV2Screen(store: PlannerStore) {
 
     val weeklyRates = store.habits.map { store.habitCompletionRate(it, 7) }
     val weeklyHabitRate = if (weeklyRates.isEmpty()) 0 else weeklyRates.average().roundToInt()
-    val bestActiveStreak = store.habits.maxOfOrNull { store.streak(it) } ?: 0
+    val bestHistoricalStreak = store.habits.maxOfOrNull {
+        bestScheduledHabitStreak(it.completedDates, it.schedule)
+    } ?: 0
 
     LazyColumn(
         Modifier.fillMaxSize().padding(horizontal = LocalStyleTokens.current.screenPadding),
@@ -79,7 +82,7 @@ fun AnalyticsV2Screen(store: PlannerStore) {
                     horizontalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)
                 ) {
                     MetricCard(store.focusMinutes.toString(), "минут фокуса", Modifier.weight(1f))
-                    MetricCard(bestActiveStreak.toString(), "лучшая активная серия", Modifier.weight(1f))
+                    MetricCard(bestHistoricalStreak.toString(), "лучшая серия", Modifier.weight(1f))
                 }
             }
         }
