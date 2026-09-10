@@ -16,7 +16,9 @@ data class PlannerTask(
     val dueDate: String? = LocalDate.now().toString(),
     val priority: Int = 2,
     val completed: Boolean = false,
-    val isFocus: Boolean = false
+    val isFocus: Boolean = false,
+    val startMinutes: Int? = null,
+    val durationMinutes: Int = 60
 )
 
 data class Habit(
@@ -35,8 +37,19 @@ class PlannerStore(context: Context) {
     init {
         load()
         if (tasks.isEmpty() && habits.isEmpty() && !prefs.getBoolean("seeded", false)) {
-            tasks += PlannerTask(title = "Сформулировать 3 главных результата дня", priority = 3, isFocus = true)
-            tasks += PlannerTask(title = "Разобрать входящие задачи", priority = 2)
+            tasks += PlannerTask(
+                title = "Сформулировать 3 главных результата дня",
+                priority = 3,
+                isFocus = true,
+                startMinutes = 9 * 60,
+                durationMinutes = 45
+            )
+            tasks += PlannerTask(
+                title = "Разобрать входящие задачи",
+                priority = 2,
+                startMinutes = 11 * 60,
+                durationMinutes = 30
+            )
             habits += Habit(title = "Вода")
             habits += Habit(title = "Чтение 20 минут")
             persist()
@@ -44,9 +57,23 @@ class PlannerStore(context: Context) {
         }
     }
 
-    fun addTask(title: String, dueDate: String? = LocalDate.now().toString(), priority: Int = 2, focus: Boolean = false) {
+    fun addTask(
+        title: String,
+        dueDate: String? = LocalDate.now().toString(),
+        priority: Int = 2,
+        focus: Boolean = false,
+        startMinutes: Int? = null,
+        durationMinutes: Int = 60
+    ) {
         if (title.isBlank()) return
-        tasks += PlannerTask(title = title.trim(), dueDate = dueDate, priority = priority, isFocus = focus)
+        tasks += PlannerTask(
+            title = title.trim(),
+            dueDate = dueDate,
+            priority = priority,
+            isFocus = focus,
+            startMinutes = startMinutes,
+            durationMinutes = durationMinutes.coerceIn(15, 12 * 60)
+        )
         persist()
     }
 
@@ -108,7 +135,9 @@ class PlannerStore(context: Context) {
                     dueDate = o.optString("dueDate").takeIf { it.isNotBlank() },
                     priority = o.optInt("priority", 2),
                     completed = o.optBoolean("completed", false),
-                    isFocus = o.optBoolean("isFocus", false)
+                    isFocus = o.optBoolean("isFocus", false),
+                    startMinutes = if (o.has("startMinutes") && !o.isNull("startMinutes")) o.optInt("startMinutes") else null,
+                    durationMinutes = o.optInt("durationMinutes", 60).coerceAtLeast(15)
                 )
             }
             val habitArray = JSONArray(prefs.getString("habits", "[]"))
@@ -131,6 +160,8 @@ class PlannerStore(context: Context) {
                     put("priority", task.priority)
                     put("completed", task.completed)
                     put("isFocus", task.isFocus)
+                    if (task.startMinutes == null) put("startMinutes", JSONObject.NULL) else put("startMinutes", task.startMinutes)
+                    put("durationMinutes", task.durationMinutes)
                 })
             }
         }
