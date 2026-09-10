@@ -30,10 +30,25 @@ fun DayTimeline(store: PlannerStore, date: LocalDate, onOpen: (AgendaItem) -> Un
     val tokens = LocalStyleTokens.current
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         val untimed = entries.filter { it.startMinutes == null }
+        val timedCount = entries.size - untimed.size
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = tokens.cardShape,
+            color = MaterialTheme.colorScheme.surfaceVariant
+        ) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("План дня", style = MaterialTheme.typography.titleMedium)
+                    Text(if (entries.isEmpty()) "Пока свободно" else "$timedCount по времени · ${untimed.size} без времени", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Text("🕒", style = MaterialTheme.typography.titleLarge)
+            }
+        }
         if (untimed.isNotEmpty()) {
             Text("Без времени", style = MaterialTheme.typography.titleMedium)
             untimed.forEach { item ->
-                OutlinedButton(onClick = { onOpen(item) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                OutlinedButton(onClick = { onOpen(item) }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
+                    Text(agendaKindIcon(item.kind), modifier = Modifier.padding(end = 8.dp))
                     Text(item.title, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
                     Text("Назначить", style = MaterialTheme.typography.labelMedium)
                 }
@@ -67,7 +82,7 @@ fun DayTimeline(store: PlannerStore, date: LocalDate, onOpen: (AgendaItem) -> Un
                             .background(if (item.completed) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.primaryContainer)
                             .clickable { onOpen(item) }) {
                             Column(Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 3.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                Text((if (item.completed) "✓ " else "") + item.title, maxLines = if (segmentHeight >= 90.dp) 3 else 1,
+                                Text((if (item.completed) "✓ " else agendaKindIcon(item.kind) + " ") + item.title, maxLines = if (segmentHeight >= 90.dp) 3 else 1,
                                     overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.labelLarge)
                                 Text(timeRange(item.startMinutes!!, item.durationMinutes), style = MaterialTheme.typography.labelSmall,
                                     maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -126,4 +141,10 @@ fun AgendaEntryDialog(store: PlannerStore, item: AgendaItem, onDismiss: () -> Un
             AgendaKind.TRACKER -> store.updateTrackerTime(item.id, start, duration)
         }
     }
+}
+
+private fun agendaKindIcon(kind: AgendaKind): String = when (kind) {
+    AgendaKind.TASK -> "✓"
+    AgendaKind.HABIT -> "↻"
+    AgendaKind.TRACKER -> "◉"
 }
