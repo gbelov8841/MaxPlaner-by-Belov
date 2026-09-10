@@ -69,6 +69,14 @@ class HabitScheduleTest {
     }
 
     @Test
+    fun `completion rate rounds instead of truncating`() {
+        val schedule = HabitSchedule.weekdays(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY)
+        val dates = setOf("2026-09-07", "2026-09-09")
+
+        assertEquals(67, scheduledCompletionRate(dates, schedule, 7, thursday))
+    }
+
+    @Test
     fun `schedule with no weekdays has no opportunities`() {
         val schedule = HabitSchedule(type = HabitScheduleType.WEEKDAYS)
 
