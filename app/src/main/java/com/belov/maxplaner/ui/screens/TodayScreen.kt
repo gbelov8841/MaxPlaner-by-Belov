@@ -1,5 +1,8 @@
 package com.belov.maxplaner.ui.screens
 
+import com.belov.maxplaner.ui.components.CompletionButton
+import androidx.compose.ui.text.style.TextDecoration
+
 import com.belov.maxplaner.ui.theme.LocalStyleTokens
 import com.belov.maxplaner.ui.components.PlannerCard
 import com.belov.maxplaner.ui.components.PlannerSurface
@@ -127,12 +130,9 @@ fun TodayScreen(store: PlannerStore) {
             items(todayTasks, key = { it.id }) { task ->
                 PlannerCard(shape = LocalStyleTokens.current.compactShape, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                     Row(Modifier.fillMaxWidth().padding(vertical = 9.dp, horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = { store.toggleTask(task.id) }) {
-                            Icon(if (task.completed) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked, null,
-                                tint = if (task.completed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                        CompletionButton(task.completed, task.title) { store.toggleTask(task.id) }
                         Column(Modifier.weight(1f)) {
-                            Text(task.title, fontWeight = FontWeight.Medium)
+                            Text(task.title, fontWeight = FontWeight.Medium, textDecoration = if (task.completed) TextDecoration.LineThrough else null)
                             Text(
                                 when (task.priority) { 3 -> "Высокий приоритет"; 1 -> "Низкий приоритет"; else -> "Обычный приоритет" },
                                 style = MaterialTheme.typography.bodyMedium,

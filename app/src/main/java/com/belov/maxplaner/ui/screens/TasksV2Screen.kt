@@ -1,10 +1,21 @@
 package com.belov.maxplaner.ui.screens
 
+import com.belov.maxplaner.ui.components.CompletionButton
+import androidx.compose.ui.text.style.TextDecoration
+
 import com.belov.maxplaner.ui.theme.LocalStyleTokens
 import com.belov.maxplaner.ui.components.PlannerCard
 import com.belov.maxplaner.ui.components.PlannerSurface
 import com.belov.maxplaner.ui.components.PlannerProgressIndicator
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -49,7 +60,7 @@ import java.util.Locale
 
 @Composable
 fun TasksV2Screen(store: PlannerStore) {
-    var selectedTaskId by remember { mutableStateOf<String?>(null) }
+    var selectedTaskId by rememberSaveable { mutableStateOf<String?>(null) }
     var showAdd by remember { mutableStateOf(false) }
     val selectedTask = store.tasks.firstOrNull { it.id == selectedTaskId }
 
@@ -97,11 +108,9 @@ fun TasksV2Screen(store: PlannerStore) {
                 )
             ) {
                 Row(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = { store.toggleTask(task.id) }) {
-                        Icon(if (task.completed) Icons.Rounded.CheckCircle else Icons.Rounded.Circle, null)
-                    }
+                    CompletionButton(task.completed, task.title) { store.toggleTask(task.id) }
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(task.title, fontWeight = FontWeight.SemiBold)
+                        Text(task.title, fontWeight = FontWeight.SemiBold, textDecoration = if (task.completed) TextDecoration.LineThrough else null)
                         Text(
                             buildString {
                                 append(task.dueDate ?: "Без даты")
@@ -112,7 +121,7 @@ fun TasksV2Screen(store: PlannerStore) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    IconButton(onClick = { store.deleteTask(task.id) }) { Icon(Icons.Rounded.Delete, null) }
+                    IconButton(onClick = { store.deleteTask(task.id) }) { Icon(Icons.Rounded.Delete, "Удалить") }
                 }
             }
         }
@@ -132,7 +141,9 @@ fun TasksV2Screen(store: PlannerStore) {
 @Composable
 private fun TaskDetailScreen(store: PlannerStore, task: PlannerTask, onBack: () -> Unit) {
     var showEdit by remember { mutableStateOf(false) }
-    var newChecklistItem by remember { mutableStateOf("") }
+    var newChecklistItem by rememberSaveable(task.id) { mutableStateOf("") }
+    val haptic = LocalHapticFeedback.current
+    BackHandler(enabled = !showEdit, onBack = onBack)
     val done = task.checklist.count { it.completed }
     val progress = if (task.checklist.isEmpty()) 0f else done.toFloat() / task.checklist.size
     val dateText = task.dueDate?.let {
@@ -156,7 +167,7 @@ private fun TaskDetailScreen(store: PlannerStore, task: PlannerTask, onBack: () 
                 Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(task.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     Text("$dateText • $timeText", color = MaterialTheme.colorScheme.onPrimaryContainer)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         InfoChip(task.category)
                         InfoChip(priorityLabel(task.priority))
                     }
@@ -175,11 +186,18 @@ private fun TaskDetailScreen(store: PlannerStore, task: PlannerTask, onBack: () 
                     if (task.checklist.isNotEmpty()) PlannerProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
                     task.checklist.forEach { item ->
                         Row(
-                            modifier = Modifier.fillMaxWidth().clickable { store.toggleChecklistItem(task.id, item.id) }.padding(vertical = 4.dp),
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).toggleable(
+                                value = item.completed,
+                                role = Role.Checkbox,
+                                onValueChange = {
+                                    store.toggleChecklistItem(task.id, item.id)
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                }
+                            ).padding(vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(if (item.completed) Icons.Rounded.CheckCircle else Icons.Rounded.Circle, null)
-                            Text("  ${item.title}", modifier = Modifier.weight(1f))
+                            Text("  ${item.title}", modifier = Modifier.weight(1f), textDecoration = if (item.completed) TextDecoration.LineThrough else null)
                         }
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -190,7 +208,7 @@ private fun TaskDetailScreen(store: PlannerStore, task: PlannerTask, onBack: () 
                             label = { Text("Новый пункт") },
                             singleLine = true
                         )
-                        IconButton(onClick = {
+                        IconButton(enabled = newChecklistItem.isNotBlank(), onClick = {
                             store.addChecklistItem(task.id, newChecklistItem)
                             newChecklistItem = ""
                         }) { Icon(Icons.Rounded.Add, "Добавить") }
@@ -204,7 +222,10 @@ private fun TaskDetailScreen(store: PlannerStore, task: PlannerTask, onBack: () 
                     Icon(Icons.Rounded.Edit, null)
                     Text("  Изменить")
                 }
-                Button(onClick = { store.toggleTask(task.id) }, modifier = Modifier.weight(1f)) {
+                Button(onClick = {
+                    store.toggleTask(task.id)
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                }, modifier = Modifier.weight(1f)) {
                     Icon(Icons.Rounded.CheckCircle, null)
                     Text(if (task.completed) "  Вернуть" else "  Завершить")
                 }
