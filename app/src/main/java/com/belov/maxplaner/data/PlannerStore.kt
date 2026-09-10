@@ -4,11 +4,12 @@ import android.content.Context
 import android.os.SystemClock
 import android.provider.Settings
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import org.json.JSONArray
 import org.json.JSONObject
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.util.UUID
 
@@ -36,7 +37,8 @@ data class PlannerTask(
 data class Habit(
     val id: String = UUID.randomUUID().toString(),
     val title: String,
-    val completedDates: Set<String> = emptySet()
+    val completedDates: Set<String> = emptySet(),
+    val schedule: HabitSchedule = HabitSchedule.Daily
 )
 
 class PlannerStore(context: Context) {
@@ -152,18 +154,27 @@ class PlannerStore(context: Context) {
         persist()
     }
 
-    fun addHabit(title: String) {
+    fun addHabit(title: String, schedule: HabitSchedule = HabitSchedule.Daily) {
         if (title.isBlank()) return
-        habits += Habit(title = title.trim())
+        habits += Habit(title = title.trim(), schedule = schedule.normalized())
+        persist()
+    }
+
+    fun updateHabitSchedule(id: String, schedule: HabitSchedule) {
+        val index = habits.indexOfFirst { it.id == id }
+        if (index < 0) return
+        habits[index] = habits[index].copy(schedule = schedule.normalized())
         persist()
     }
 
     fun toggleHabitToday(id: String) {
         val index = habits.indexOfFirst { it.id == id }
         if (index < 0) return
-        val today = LocalDate.now().toString()
+        val date = LocalDate.now()
+        if (!habits[index].schedule.isScheduled(date)) return
+        val dateKey = date.toString()
         val dates = habits[index].completedDates.toMutableSet()
-        if (!dates.add(today)) dates.remove(today)
+        if (!dates.add(dateKey)) dates.remove(dateKey)
         habits[index] = habits[index].copy(completedDates = dates)
         persist()
     }
@@ -220,7 +231,12 @@ class PlannerStore(context: Context) {
             .putInt("focus_minutes", next.totalMinutes).apply()
     }
 
-    fun streak(habit: Habit): Int = activeHabitStreak(habit.completedDates)
+    fun streak(habit: Habit): Int = scheduledHabitStreak(habit.completedDates, habit.schedule)
+
+    fun habitCompletionRate(habit: Habit, days: Int): Int =
+        scheduledCompletionRate(habit.completedDates, habit.schedule, days)
+
+    fun isHabitScheduledToday(habit: Habit): Boolean = habit.schedule.isScheduled(LocalDate.now())
 
     private fun load() {
         runCatching {
@@ -258,9 +274,32 @@ class PlannerStore(context: Context) {
                 val o = habitArray.getJSONObject(i)
                 val datesJson = o.optJSONArray("dates") ?: JSONArray()
                 val dates = buildSet { repeat(datesJson.length()) { add(datesJson.getString(it)) } }
-                habits += Habit(o.getString("id"), o.getString("title"), dates)
+                habits += Habit(
+                    id = o.getString("id"),
+                    title = o.getString("title"),
+                    completedDates = dates,
+                    schedule = readHabitSchedule(o)
+                )
             }
         }
+    }
+
+    private fun readHabitSchedule(o: JSONObject): HabitSchedule {
+        val type = runCatching {
+            HabitScheduleType.valueOf(o.optString("scheduleType", HabitScheduleType.DAILY.name))
+        }.getOrDefault(HabitScheduleType.DAILY)
+        val weekdaysJson = o.optJSONArray("scheduleWeekdays") ?: JSONArray()
+        val weekdays = buildSet {
+            repeat(weekdaysJson.length()) { index ->
+                runCatching { DayOfWeek.valueOf(weekdaysJson.getString(index)) }.getOrNull()?.let(::add)
+            }
+        }
+        return HabitSchedule(type = type, weekdays = weekdays).normalized()
+    }
+
+    private fun HabitSchedule.normalized(): HabitSchedule = when (type) {
+        HabitScheduleType.DAILY -> HabitSchedule.Daily
+        HabitScheduleType.WEEKDAYS -> copy(weekdays = weekdays.toSet())
     }
 
     private fun persist() {
@@ -296,6 +335,8 @@ class PlannerStore(context: Context) {
                     put("id", habit.id)
                     put("title", habit.title)
                     put("dates", JSONArray(habit.completedDates.toList()))
+                    put("scheduleType", habit.schedule.type.name)
+                    put("scheduleWeekdays", JSONArray(habit.schedule.weekdays.map { it.name }))
                 })
             }
         }
