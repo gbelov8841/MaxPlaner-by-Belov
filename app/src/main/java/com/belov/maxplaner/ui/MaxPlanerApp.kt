@@ -14,6 +14,12 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -50,6 +56,15 @@ private val tabs = listOf(
 fun MaxPlanerApp(appearance: AppearanceStore) {
     val context = LocalContext.current
     val store = remember { PlannerStore(context.applicationContext) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(store, lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while (isActive) {
+                store.refreshFocus()
+                delay(1000)
+            }
+        }
+    }
     val navController = rememberNavController()
     val backStack by navController.currentBackStackEntryAsState()
     val route = backStack?.destination?.route ?: "today"

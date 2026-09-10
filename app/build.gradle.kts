@@ -25,6 +25,7 @@ android {
 }
 
 dependencies {
+    testImplementation("junit:junit:4.13.2")
     // Compose 1.11.x is the API-36-compatible line for the current AGP 8.13 toolchain.
     implementation(platform("androidx.compose:compose-bom:2026.06.01"))
     implementation("androidx.activity:activity-compose:1.12.1")

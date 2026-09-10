@@ -1,8 +1,10 @@
 package com.belov.maxplaner.data
 
 import android.content.Context
+import android.os.SystemClock
+import android.provider.Settings
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.setValue
 import org.json.JSONArray
@@ -41,10 +43,17 @@ class PlannerStore(context: Context) {
     private val prefs = context.getSharedPreferences("maxplaner_store", Context.MODE_PRIVATE)
     val tasks = mutableStateListOf<PlannerTask>()
     val habits = mutableStateListOf<Habit>()
-    var focusMinutes by mutableIntStateOf(prefs.getInt("focus_minutes", 0))
+    private val bootId = runCatching { Settings.Global.getInt(context.contentResolver, Settings.Global.BOOT_COUNT, -1) }.getOrDefault(-1)
+    var focusClock by mutableStateOf(readFocusClock())
+        private set
+    var focusState by mutableStateOf(loadFocus())
+        private set
+    val focusMinutes: Int get() = focusState.totalMinutes
+    var today by mutableStateOf(LocalDate.now())
         private set
 
     init {
+        refreshFocus()
         load()
         if (tasks.isEmpty() && habits.isEmpty() && !prefs.getBoolean("seeded", false)) {
             tasks += PlannerTask(
@@ -164,9 +173,51 @@ class PlannerStore(context: Context) {
         persist()
     }
 
-    fun addFocusMinutes(minutes: Int) {
-        focusMinutes += minutes.coerceAtLeast(0)
-        prefs.edit().putInt("focus_minutes", focusMinutes).apply()
+    fun refreshFocus() {
+        focusClock = readFocusClock()
+        today = LocalDate.now()
+        saveFocus(focusState.refresh(focusClock))
+    }
+
+    fun startFocus() {
+        focusClock = readFocusClock()
+        saveFocus(focusState.start(focusClock))
+    }
+
+    fun pauseFocus() {
+        focusClock = readFocusClock()
+        saveFocus(focusState.pause(focusClock))
+    }
+
+    private fun readFocusClock() = FocusClock(System.currentTimeMillis(), SystemClock.elapsedRealtime(), bootId)
+
+    private fun loadFocus(): FocusState = runCatching {
+        val saved = JSONObject(prefs.getString("focus_session", "{}") ?: "{}")
+        FocusState(
+            session = FocusSession(
+                mode = FocusMode.valueOf(saved.optString("mode", FocusMode.Idle.name)),
+                pausedMillis = saved.optLong("pausedMillis", FOCUS_DURATION_MILLIS).coerceIn(0L, FOCUS_DURATION_MILLIS),
+                deadlineWallMillis = saved.optLong("deadlineWallMillis", 0L),
+                deadlineElapsedMillis = saved.optLong("deadlineElapsedMillis", 0L),
+                bootId = saved.optInt("bootId", -1)
+            ),
+            totalMinutes = prefs.getInt("focus_minutes", 0)
+        )
+    }.getOrElse { FocusState(totalMinutes = prefs.getInt("focus_minutes", 0)) }
+
+    private fun saveFocus(next: FocusState) {
+        if (next == focusState) return
+        focusState = next
+        val session = next.session
+        val saved = JSONObject().apply {
+            put("mode", session.mode.name)
+            put("pausedMillis", session.pausedMillis)
+            put("deadlineWallMillis", session.deadlineWallMillis)
+            put("deadlineElapsedMillis", session.deadlineElapsedMillis)
+            put("bootId", session.bootId)
+        }
+        prefs.edit().putString("focus_session", saved.toString())
+            .putInt("focus_minutes", next.totalMinutes).apply()
     }
 
     fun streak(habit: Habit): Int {

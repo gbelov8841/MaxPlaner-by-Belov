@@ -34,6 +34,8 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Circle
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.StarBorder
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -131,7 +133,7 @@ fun TasksV2Screen(store: PlannerStore) {
 }
 
 @Composable
-private fun TaskDetailScreen(store: PlannerStore, task: PlannerTask, onBack: () -> Unit) {
+internal fun TaskDetailScreen(store: PlannerStore, task: PlannerTask, onBack: () -> Unit) {
     var showEdit by rememberSaveable { mutableStateOf(false) }
     var newChecklistItem by rememberSaveable(task.id) { mutableStateOf("") }
     val haptic = LocalHapticFeedback.current
@@ -162,6 +164,10 @@ private fun TaskDetailScreen(store: PlannerStore, task: PlannerTask, onBack: () 
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         InfoChip(task.category)
                         InfoChip(priorityLabel(task.priority))
+                    }
+                    TextButton(onClick = { store.updateTask(task.copy(isFocus = !task.isFocus)) }) {
+                        Icon(if (task.isFocus) Icons.Rounded.Star else Icons.Rounded.StarBorder, null)
+                        Text(if (task.isFocus) " Убрать из фокуса" else " Выбрать для фокуса")
                     }
                 }
             }
