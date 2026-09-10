@@ -78,6 +78,7 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
     val navController = rememberNavController()
     val backStack by navController.currentBackStackEntryAsState()
     val route = backStack?.destination?.route ?: "today"
+    val motionDuration = LocalStyleTokens.current.motionDurationMillis
 
     Scaffold(
         bottomBar = {
@@ -89,7 +90,7 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
                     val selected = route == tab.route
                     val iconScale by animateFloatAsState(
                         targetValue = if (selected) 1.12f else 1f,
-                        animationSpec = tween(LocalStyleTokens.current.motionDurationMillis),
+                        animationSpec = tween(motionDuration),
                         label = "navIconScale"
                     )
                     NavigationBarItem(
@@ -133,15 +134,15 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
                     val from = tabs.indexOfFirst { it.route == initialState.destination.route }
                     val to = tabs.indexOfFirst { it.route == targetState.destination.route }
                     val direction = if (from >= 0 && to >= 0 && to < from) -1 else 1
-                    fadeIn(tween(LocalStyleTokens.current.motionDurationMillis)) +
-                        slideInHorizontally(tween(LocalStyleTokens.current.motionDurationMillis)) { full -> direction * full / 10 }
+                    fadeIn(tween(motionDuration)) +
+                        slideInHorizontally(tween(motionDuration)) { full -> direction * full / 10 }
                 },
                 exitTransition = {
                     val from = tabs.indexOfFirst { it.route == initialState.destination.route }
                     val to = tabs.indexOfFirst { it.route == targetState.destination.route }
                     val direction = if (from >= 0 && to >= 0 && to < from) -1 else 1
-                    fadeOut(tween(LocalStyleTokens.current.motionDurationMillis / 2)) +
-                        slideOutHorizontally(tween(LocalStyleTokens.current.motionDurationMillis)) { full -> -direction * full / 12 }
+                    fadeOut(tween(motionDuration / 2)) +
+                        slideOutHorizontally(tween(motionDuration)) { full -> -direction * full / 12 }
                 },
                 popEnterTransition = { EnterTransition.None },
                 popExitTransition = { ExitTransition.None }
