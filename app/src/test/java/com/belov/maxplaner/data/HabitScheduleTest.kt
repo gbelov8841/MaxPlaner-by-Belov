@@ -17,6 +17,16 @@ class HabitScheduleTest {
     }
 
     @Test
+    fun `daily scheduled streak matches existing daily behavior`() {
+        val dates = setOf("2026-09-09", "2026-09-08", "2026-09-07")
+
+        assertEquals(
+            activeHabitStreak(dates, thursday),
+            scheduledHabitStreak(dates, HabitSchedule.Daily, thursday)
+        )
+    }
+
+    @Test
     fun `weekday schedule only includes selected days`() {
         val schedule = HabitSchedule.weekdays(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY)
 
