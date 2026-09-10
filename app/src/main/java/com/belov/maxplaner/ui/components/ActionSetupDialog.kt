@@ -58,7 +58,7 @@ fun ActionSetupDialog(store: PlannerStore, onDismiss: () -> Unit, template: Acti
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             listOf(TrackerType.CHECK to "Выполнение", TrackerType.COUNTER to "Количество", TrackerType.NUMBER to "Значение",
                                 TrackerType.DURATION to "Минуты", TrackerType.STREAK to "Дни подряд", TrackerType.SCALE to "Оценку от 1 до 5").forEach { (value, label) ->
-                                FilterChip(type == value, onClick = { type = value; targetText = ""; unit = if (value == TrackerType.DURATION) "мин" else "" }, label = { Text(label) })
+                                FilterChip(type == value, onClick = { type = value; targetText = ""; unit = if (value == TrackerType.DURATION) "мин" else "" }, label = { Text(label, maxLines = 1) })
                             }
                         }
                     }
@@ -70,8 +70,8 @@ fun ActionSetupDialog(store: PlannerStore, onDismiss: () -> Unit, template: Acti
                     OutlinedTextField(unit, { unit = it }, label = { Text("Единица измерения") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     if (!gradual && targetText.isNotBlank()) {
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            FilterChip(!upperLimit, { upperLimit = false }, label = { Text("Не меньше") })
-                            FilterChip(upperLimit, { upperLimit = true }, label = { Text("Не больше") })
+                            FilterChip(!upperLimit, { upperLimit = false }, label = { Text("Не меньше", maxLines = 1) })
+                            FilterChip(upperLimit, { upperLimit = true }, label = { Text("Не больше", maxLines = 1) })
                         }
                     }
                     if (type == TrackerType.DURATION) Text("Записывай потраченное время в минутах. Таймер на 25 минут — на главной.", style = MaterialTheme.typography.bodySmall)
@@ -90,7 +90,7 @@ fun ActionSetupDialog(store: PlannerStore, onDismiss: () -> Unit, template: Acti
                     }
                 }
                 if (period != "Сегодня") {
-                    TextButton(onClick = { showDate = true }) { Text("С " + start.format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale("ru")))) }
+                    TextButton(onClick = { showDate = true }, modifier = Modifier.heightIn(min = 48.dp)) { Text("С " + start.format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale("ru"))), maxLines = 1) }
                 }
                 if (period == "На неделю") Text("Каждый день в течение 7 дней, начиная с выбранной даты.", style = MaterialTheme.typography.bodySmall)
                 if (period == "Повторять") Text("Каждый день, начиная с выбранной даты.", style = MaterialTheme.typography.bodySmall)
@@ -128,7 +128,7 @@ fun ActionSetupDialog(store: PlannerStore, onDismiss: () -> Unit, template: Acti
                 onDismiss()
             }) { Text("Добавить", maxLines = 1) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена", maxLines = 1) } }
     )
     if (showDate) {
         val state = rememberDatePickerState(initialSelectedDateMillis = start.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli())
