@@ -93,7 +93,26 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
                 tonalElevation = LocalStyleTokens.current.navigationElevation
             ) {
                 tabs.take(2).forEach { tab ->
-                    PrimeNavItem(tab, route, navController, motionDuration)
+                    NavigationBarItem(
+                        selected = route == tab.route,
+                        onClick = {
+                            navController.navigate(tab.route) {
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        icon = { Icon(tab.icon, contentDescription = tab.label) },
+                        label = { Text(tab.label, maxLines = 1) },
+                        alwaysShowLabel = route == tab.route,
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = androidx.compose.ui.graphics.Color(0xFFE8C56A),
+                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                            indicatorColor = androidx.compose.ui.graphics.Color(0xFF243246),
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .72f),
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .72f)
+                        )
+                    )
                 }
                 FloatingActionButton(
                     onClick = { showQuickAdd = true },
@@ -104,7 +123,26 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
                     Icon(Icons.Rounded.Add, contentDescription = "Добавить")
                 }
                 tabs.drop(2).forEach { tab ->
-                    PrimeNavItem(tab, route, navController, motionDuration)
+                    NavigationBarItem(
+                        selected = route == tab.route,
+                        onClick = {
+                            navController.navigate(tab.route) {
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        icon = { Icon(tab.icon, contentDescription = tab.label) },
+                        label = { Text(tab.label, maxLines = 1) },
+                        alwaysShowLabel = route == tab.route,
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = androidx.compose.ui.graphics.Color(0xFFE8C56A),
+                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                            indicatorColor = androidx.compose.ui.graphics.Color(0xFF243246),
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .72f),
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .72f)
+                        )
+                    )
                 }
             }
         }
@@ -142,34 +180,3 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
     if (showQuickAdd) ActionSetupDialog(store, onDismiss = { showQuickAdd = false })
 }
 
-@Composable
-private fun PrimeNavItem(tab: Tab, route: String, navController: androidx.navigation.NavHostController, motionDuration: Int) {
-    val selected = route == tab.route
-    val iconScale by animateFloatAsState(
-        targetValue = if (selected) 1.12f else 1f,
-        animationSpec = tween(motionDuration),
-        label = "navIconScale"
-    )
-    NavigationBarItem(
-        selected = selected,
-        onClick = {
-            navController.navigate(tab.route) {
-                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                launchSingleTop = true
-                restoreState = true
-            }
-        },
-        icon = {
-            Icon(tab.icon, contentDescription = tab.label, modifier = Modifier.graphicsLayer { scaleX = iconScale; scaleY = iconScale })
-        },
-        label = { Text(tab.label, maxLines = 1) },
-        alwaysShowLabel = selected,
-        colors = NavigationBarItemDefaults.colors(
-            selectedIconColor = androidx.compose.ui.graphics.Color(0xFFE8C56A),
-            selectedTextColor = MaterialTheme.colorScheme.onSurface,
-            indicatorColor = androidx.compose.ui.graphics.Color(0xFF243246),
-            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .72f),
-            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .72f)
-        )
-    )
-}
