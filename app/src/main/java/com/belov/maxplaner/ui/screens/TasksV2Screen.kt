@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -40,6 +43,8 @@ import com.belov.maxplaner.ui.components.ActionSetupDialog
 import com.belov.maxplaner.ui.components.TrackerCard
 import com.belov.maxplaner.data.ActionTemplate
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.OutlinedTextField
 import com.belov.maxplaner.data.ActionCatalog
 import com.belov.maxplaner.data.ActionCategory
@@ -150,9 +155,12 @@ internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit) {
                 item { OutlinedTextField(query, { query = it }, label = { Text("Найти действие") }, singleLine = true, modifier = Modifier.fillMaxWidth()) }
                 item {
                     TextButton(onClick = { showCategories = !showCategories }) { Text(if (showCategories) "Скрыть категории" else "Все категории · 11", maxLines = 1) }
-                    if (showCategories) FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        FilterChip(category == null, { category = null; query = "" }, label = { Text("⭐ Популярное", maxLines = 1) })
-                        ActionCategory.entries.forEach { c -> FilterChip(category == c, { category = c; query = ""; showCategories = false }, label = { Text(c.title, maxLines = 1) }) }
+                    if (showCategories) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        CategoryRow("⭐", "Популярное", "Часто выбирают", category == null) { category = null; query = ""; showCategories = false }
+                        ActionCategory.entries.forEach { c ->
+                            val meta = categoryMeta(c)
+                            CategoryRow(meta.first, c.title.substringAfter(" "), meta.second, category == c) { category = c; query = ""; showCategories = false }
+                        }
                     }
                 }
                 item { OutlinedButton(onClick = { custom = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("+ Создать своё", maxLines = 1) } }
@@ -174,4 +182,38 @@ internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit) {
         confirmButton = {},
         dismissButton = { TextButton(onClick = onDismiss) { Text("Закрыть", maxLines = 1) } }
     )
+}
+
+@Composable
+private fun CategoryRow(icon: String, title: String, subtitle: String, selected: Boolean, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape = RoundedCornerShape(18.dp),
+        color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+        tonalElevation = if (selected) 2.dp else 0.dp
+    ) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(icon, style = MaterialTheme.typography.titleLarge)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(title, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+            }
+            Icon(Icons.Rounded.ChevronRight, contentDescription = "Открыть раздел", tint = MaterialTheme.colorScheme.primary)
+        }
+    }
+}
+
+private fun categoryMeta(category: ActionCategory): Pair<String, String> = when (category) {
+    ActionCategory.HEALTH -> "❤️" to "Сон, вода и самочувствие"
+    ActionCategory.SPORT -> "🏋️" to "Тренировки и движение"
+    ActionCategory.HABITS -> "🚭" to "Привычки и ограничения"
+    ActionCategory.NUTRITION -> "🥗" to "Питание и режим"
+    ActionCategory.MENTAL -> "🧠" to "Состояние и восстановление"
+    ActionCategory.DEVELOPMENT -> "📚" to "Чтение, речь и обучение"
+    ActionCategory.PRODUCTIVITY -> "💼" to "Фокус и важные дела"
+    ActionCategory.RELATIONSHIPS -> "👥" to "Близкие и общение"
+    ActionCategory.DIGITAL -> "📱" to "Экран и цифровые привычки"
+    ActionCategory.FINANCE -> "💰" to "Бюджет и накопления"
+    ActionCategory.HOME -> "🏠" to "Порядок и бытовые дела"
 }
