@@ -215,9 +215,9 @@ fun CalendarScreen(store: PlannerStore) {
 private fun CalendarHeader(selectedDate: LocalDate, mode: CalendarMode, onDateChange: (LocalDate) -> Unit) {
     val monthFormatter = remember { DateTimeFormatter.ofPattern("LLLL yyyy", Locale("ru")) }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text("Календарь", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold)
+        Text("План дня", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, color = androidx.compose.ui.graphics.Color(0xFFE8C56A))
         Text(
-            selectedDate.format(monthFormatter).replaceFirstChar { it.uppercase() },
+            "Расписание · " + selectedDate.format(monthFormatter).replaceFirstChar { it.uppercase() },
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         val period = when (mode) {
@@ -288,7 +288,7 @@ private fun DayCalendar(store: PlannerStore, date: LocalDate, onDateChange: (Loc
                     modifier = Modifier.weight(1f).clickable { onDateChange(day) },
                     shape = LocalStyleTokens.current.compactShape,
                     selected = active,
-                    color = if (active) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+                    color = if (active) androidx.compose.ui.graphics.Color(0xFF1E3B31) else androidx.compose.ui.graphics.Color(0xFF0E1A27)
                 ) {
                     Column(Modifier.padding(vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(day.dayOfWeek.getDisplayName(TextStyle.SHORT, locale).take(2).uppercase(), style = MaterialTheme.typography.labelSmall)
