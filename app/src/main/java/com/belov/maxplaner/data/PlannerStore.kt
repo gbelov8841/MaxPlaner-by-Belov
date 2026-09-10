@@ -220,15 +220,7 @@ class PlannerStore(context: Context) {
             .putInt("focus_minutes", next.totalMinutes).apply()
     }
 
-    fun streak(habit: Habit): Int {
-        var date = LocalDate.now()
-        var streak = 0
-        while (habit.completedDates.contains(date.toString())) {
-            streak++
-            date = date.minusDays(1)
-        }
-        return streak
-    }
+    fun streak(habit: Habit): Int = activeHabitStreak(habit.completedDates)
 
     private fun load() {
         runCatching {
