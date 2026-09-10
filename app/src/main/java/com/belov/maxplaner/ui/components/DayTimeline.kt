@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
 import com.belov.maxplaner.data.*
 import com.belov.maxplaner.ui.theme.LocalStyleTokens
 import java.time.LocalDate
@@ -34,28 +35,35 @@ fun DayTimeline(store: PlannerStore, date: LocalDate, onOpen: (AgendaItem) -> Un
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = tokens.cardShape,
-            color = MaterialTheme.colorScheme.surfaceVariant
+            color = Color(0xFF102437),
+            tonalElevation = 1.dp
         ) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("План дня", style = MaterialTheme.typography.titleMedium)
-                    Text(if (entries.isEmpty()) "Пока свободно" else "$timedCount по времени · ${untimed.size} без времени", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Text("🕒", style = MaterialTheme.typography.titleLarge)
+            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Распорядок дня", style = MaterialTheme.typography.titleLarge, color = Color(0xFFE8C56A))
+                Text(
+                    if (entries.isEmpty()) "День пока свободен" else "$timedCount по времени · ${untimed.size} без времени",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFFA8BAC8)
+                )
             }
         }
         if (untimed.isNotEmpty()) {
-            Text("Без времени", style = MaterialTheme.typography.titleMedium)
+            Text("Без времени", style = MaterialTheme.typography.titleMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
             untimed.forEach { item ->
-                OutlinedButton(onClick = { onOpen(item) }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
-                    Text(agendaKindIcon(item.kind), modifier = Modifier.padding(end = 8.dp))
-                    Text(item.title, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    Text("Назначить", style = MaterialTheme.typography.labelMedium)
+                Surface(
+                    modifier = Modifier.fillMaxWidth().clickable { onOpen(item) },
+                    shape = tokens.compactShape,
+                    color = Color(0xFF101C29)
+                ) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(item.title, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        Text("Назначить время", style = MaterialTheme.typography.labelMedium, color = Color(0xFFE8C56A))
+                    }
                 }
             }
         }
-        Text("Нажми на час, чтобы добавить дело; на блок — чтобы изменить.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        if (placed.any { it.laneCount > 1 }) Text("Дела пересекаются по времени — они показаны рядом.", style = MaterialTheme.typography.bodySmall)
+        Text("Нажми на свободный час, чтобы добавить дело. Нажми на блок, чтобы изменить его.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF8FA3B3))
+        if (placed.any { it.laneCount > 1 }) Text("Пересекающиеся дела показаны рядом.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF8FA3B3))
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             val maxLanes = placed.maxOfOrNull { it.laneCount } ?: 1
             val canvasWidth = maxOf(maxWidth, (54 + maxLanes * 140).dp)
@@ -64,10 +72,10 @@ fun DayTimeline(store: PlannerStore, date: LocalDate, onOpen: (AgendaItem) -> Un
                     for (hour in firstHour..lastHour) {
                         Row(Modifier.offset(y = ((hour - firstHour) * 60 * pixelsPerMinute).dp).fillMaxWidth(), verticalAlignment = Alignment.Top) {
                             Text(if (hour == 24) "24:00" else timeOfDay(hour * 60), style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(54.dp))
+                                color = Color(0xFF7890A3), modifier = Modifier.width(54.dp))
                             Box(Modifier.weight(1f).height(if (hour == lastHour) 1.dp else (60 * pixelsPerMinute).dp)
                                 .clickable(enabled = hour < 24) { onAdd(hour * 60) }) {
-                                Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outlineVariant))
+                                Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF203142)))
                             }
                         }
                     }
@@ -79,7 +87,7 @@ fun DayTimeline(store: PlannerStore, date: LocalDate, onOpen: (AgendaItem) -> Un
                         Box(Modifier.offset(x = 54.dp + laneWidth * placedItem.lane, y = ((segment.start - firstHour * 60) * pixelsPerMinute).dp)
                             .width(laneWidth).height(segmentHeight).padding(end = 4.dp, bottom = 2.dp)
                             .clip(tokens.compactShape)
-                            .background(if (item.completed) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.primaryContainer)
+                            .background(if (item.completed) Color(0xFF18242F) else Color(0xFF183149))
                             .clickable { onOpen(item) }) {
                             Column(Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 3.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text((if (item.completed) "✓ " else agendaKindIcon(item.kind) + " ") + item.title, maxLines = if (segmentHeight >= 90.dp) 3 else 1,
@@ -96,8 +104,8 @@ fun DayTimeline(store: PlannerStore, date: LocalDate, onOpen: (AgendaItem) -> Un
                     val nowMinute = now.hour * 60 + now.minute
                     if (date == store.today && nowMinute in firstHour * 60 until lastHour * 60) {
                         Row(Modifier.offset(y = ((nowMinute - firstHour * 60) * pixelsPerMinute).dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                            Text(timeOfDay(nowMinute), modifier = Modifier.width(54.dp), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall)
-                            Box(Modifier.weight(1f).height(2.dp).background(MaterialTheme.colorScheme.primary))
+                            Text(timeOfDay(nowMinute), modifier = Modifier.width(54.dp), color = Color(0xFFE8C56A), style = MaterialTheme.typography.labelSmall)
+                            Box(Modifier.weight(1f).height(2.dp).background(Color(0xFFE8C56A)))
                         }
                     }
                 }
