@@ -15,12 +15,15 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.belov.maxplaner.data.PlannerStore
 import com.belov.maxplaner.ui.screens.AnalyticsScreen
 import com.belov.maxplaner.ui.screens.CalendarScreen
 import com.belov.maxplaner.ui.screens.HabitsScreen
@@ -39,6 +42,8 @@ private val tabs = listOf(
 
 @Composable
 fun MaxPlanerApp() {
+    val context = LocalContext.current
+    val store = remember { PlannerStore(context.applicationContext) }
     val navController = rememberNavController()
     val backStack by navController.currentBackStackEntryAsState()
     val route = backStack?.destination?.route ?: "today"
@@ -65,11 +70,11 @@ fun MaxPlanerApp() {
     ) { padding ->
         Box(Modifier.padding(padding)) {
             NavHost(navController, startDestination = "today") {
-                composable("today") { TodayScreen() }
-                composable("calendar") { CalendarScreen() }
-                composable("tasks") { TasksScreen() }
-                composable("habits") { HabitsScreen() }
-                composable("analytics") { AnalyticsScreen() }
+                composable("today") { TodayScreen(store) }
+                composable("calendar") { CalendarScreen(store) }
+                composable("tasks") { TasksScreen(store) }
+                composable("habits") { HabitsScreen(store) }
+                composable("analytics") { AnalyticsScreen(store) }
             }
         }
     }
