@@ -27,7 +27,7 @@ import com.belov.maxplaner.data.PlannerStore
 import com.belov.maxplaner.ui.screens.AnalyticsScreen
 import com.belov.maxplaner.ui.screens.CalendarScreen
 import com.belov.maxplaner.ui.screens.HabitsScreen
-import com.belov.maxplaner.ui.screens.TasksScreen
+import com.belov.maxplaner.ui.screens.TasksV2Screen
 import com.belov.maxplaner.ui.screens.TodayScreen
 
 private data class Tab(val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
@@ -72,7 +72,7 @@ fun MaxPlanerApp() {
             NavHost(navController, startDestination = "today") {
                 composable("today") { TodayScreen(store) }
                 composable("calendar") { CalendarScreen(store) }
-                composable("tasks") { TasksScreen(store) }
+                composable("tasks") { TasksV2Screen(store) }
                 composable("habits") { HabitsScreen(store) }
                 composable("analytics") { AnalyticsScreen(store) }
             }
