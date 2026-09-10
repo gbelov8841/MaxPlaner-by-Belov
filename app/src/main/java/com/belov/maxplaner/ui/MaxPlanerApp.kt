@@ -104,7 +104,7 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
                         },
                         icon = { Icon(tab.icon, contentDescription = tab.label) },
                         label = { Text(tab.label, maxLines = 1) },
-                        alwaysShowLabel = route == tab.route,
+                        alwaysShowLabel = true,
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = androidx.compose.ui.graphics.Color(0xFFE8C56A),
                             selectedTextColor = MaterialTheme.colorScheme.onSurface,
