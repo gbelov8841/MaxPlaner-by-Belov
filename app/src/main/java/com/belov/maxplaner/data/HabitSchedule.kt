@@ -61,6 +61,31 @@ fun scheduledHabitStreak(
     return streak
 }
 
+/** Longest historical streak across scheduled opportunities only. */
+fun bestScheduledHabitStreak(
+    completedDates: Set<String>,
+    schedule: HabitSchedule
+): Int {
+    val completed = completedDates.mapNotNull { value ->
+        runCatching { LocalDate.parse(value) }.getOrNull()
+    }.filter { schedule.isScheduled(it) }.toSet()
+    if (completed.isEmpty()) return 0
+
+    val first = completed.minOrNull() ?: return 0
+    val last = completed.maxOrNull() ?: return 0
+    var cursor = first
+    var current = 0
+    var best = 0
+    while (!cursor.isAfter(last)) {
+        if (schedule.isScheduled(cursor)) {
+            current = if (cursor in completed) current + 1 else 0
+            best = maxOf(best, current)
+        }
+        cursor = cursor.plusDays(1)
+    }
+    return best
+}
+
 /** Counts scheduled opportunities in an inclusive rolling window ending today. */
 fun scheduledOpportunityCount(
     schedule: HabitSchedule,
