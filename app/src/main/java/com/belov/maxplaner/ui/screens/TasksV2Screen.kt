@@ -20,6 +20,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -44,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.belov.maxplaner.ui.components.ActionSetupDialog
@@ -195,7 +198,7 @@ internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit) {
                         }
                     }
                 }
-                item { OutlinedButton(onClick = { custom = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("+ Создать своё", maxLines = 1) } }
+                item { OutlinedButton(onClick = { custom = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), shape = LocalStyleTokens.current.pillShape) { Icon(Icons.Rounded.Edit, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Создать своё", maxLines = 1) } }
                 if (visible.isEmpty()) item { Text("Ничего не найдено. Можно создать своё действие.") }
                 items(visible, key = { it.title }) { action ->
                     PlannerCard(modifier = Modifier.fillMaxWidth().clickable { selectedTitle = action.title }) {
@@ -205,7 +208,7 @@ internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit) {
                             }
                             Spacer(Modifier.width(12.dp))
                             Column(Modifier.weight(1f)) {
-                                Text(action.title, fontWeight = FontWeight.SemiBold)
+                                Text(action.title, fontWeight = FontWeight.SemiBold, maxLines = 2)
                                 Text(actionTypeLabel(action), style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                             }
@@ -222,8 +225,9 @@ internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit) {
 
 @Composable
 private fun CategoryRow(icon: String, title: String, subtitle: String, selected: Boolean, onClick: () -> Unit) {
+    val scale by animateFloatAsState(if (selected) 1.015f else 1f, tween(180), label = "categoryScale")
     Surface(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().graphicsLayer { scaleX = scale; scaleY = scale }.clickable(onClick = onClick),
         shape = RoundedCornerShape(18.dp),
         color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant,
         tonalElevation = if (selected) 2.dp else 0.dp
