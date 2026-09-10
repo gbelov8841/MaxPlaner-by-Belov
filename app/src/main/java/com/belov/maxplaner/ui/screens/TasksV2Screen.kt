@@ -15,6 +15,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -66,12 +69,13 @@ fun TasksV2Screen(store: PlannerStore) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Мои дела", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold)
                 Text("Выбери готовое действие или добавь своё", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Button(onClick = { showCatalog = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                    Icon(Icons.Rounded.Add, contentDescription = null)
+                Button(onClick = { showCatalog = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
+                    Icon(Icons.Rounded.AutoAwesome, contentDescription = null)
                     Text("Выбрать готовое", modifier = Modifier.padding(start = 8.dp), maxLines = 1)
                 }
-                OutlinedButton(onClick = { showCustom = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                    Text("Создать своё", maxLines = 1)
+                OutlinedButton(onClick = { showCustom = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
+                    Icon(Icons.Rounded.Edit, contentDescription = null)
+                    Text("Создать своё", modifier = Modifier.padding(start = 8.dp), maxLines = 1)
                 }
             }
         }
@@ -155,10 +159,13 @@ internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit) {
                 if (visible.isEmpty()) item { Text("Ничего не найдено. Можно создать своё действие.") }
                 items(visible, key = { it.title }) { action ->
                     PlannerCard(modifier = Modifier.fillMaxWidth().clickable { selectedTitle = action.title }) {
-                        Column(Modifier.fillMaxWidth().padding(14.dp)) {
-                            Text(action.title, fontWeight = FontWeight.SemiBold)
-                            Text(if (action.unit.isNotBlank()) action.unit else "Настроить и добавить", style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text(action.title, fontWeight = FontWeight.SemiBold)
+                                Text(if (action.unit.isNotBlank()) action.unit else "Настроить и добавить", style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Icon(Icons.Rounded.ChevronRight, contentDescription = "Открыть", tint = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }
