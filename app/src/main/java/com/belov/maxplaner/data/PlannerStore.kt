@@ -38,7 +38,9 @@ data class Habit(
     val id: String = UUID.randomUUID().toString(),
     val title: String,
     val completedDates: Set<String> = emptySet(),
-    val schedule: HabitSchedule = HabitSchedule.Daily
+    val schedule: HabitSchedule = HabitSchedule.Daily,
+    val startMinutes: Int? = null,
+    val durationMinutes: Int = 30
 )
 
 class PlannerStore(context: Context) {
@@ -105,6 +107,20 @@ class PlannerStore(context: Context) {
         persistTrackers()
     }
 
+    fun updateTrackerTime(id: String, startMinutes: Int?, durationMinutes: Int) {
+        val index = trackers.indexOfFirst { it.id == id }
+        if (index < 0 || startMinutes != null && startMinutes !in 0..1439) return
+        trackers[index] = trackers[index].copy(startMinutes = startMinutes, durationMinutes = durationMinutes.coerceIn(15, 720))
+        persistTrackers()
+    }
+
+    fun updateHabitTime(id: String, startMinutes: Int?, durationMinutes: Int) {
+        val index = habits.indexOfFirst { it.id == id }
+        if (index < 0 || startMinutes != null && startMinutes !in 0..1439) return
+        habits[index] = habits[index].copy(startMinutes = startMinutes, durationMinutes = durationMinutes.coerceIn(15, 720))
+        persist()
+    }
+
     fun deleteTracker(id: String) {
         trackers.removeAll { it.id == id }
         persistTrackers()
@@ -124,6 +140,8 @@ class PlannerStore(context: Context) {
                     target = if (o.isNull("target")) null else o.getDouble("target"),
                     initialTarget = if (o.isNull("initialTarget")) null else o.getDouble("initialTarget"),
                     weeklyStep = o.optDouble("weeklyStep", 0.0),
+                    startMinutes = if (o.has("startMinutes") && !o.isNull("startMinutes")) o.optInt("startMinutes").takeIf { it in 0..1439 } else null,
+                    durationMinutes = o.optInt("durationMinutes", 30).coerceIn(15, 720),
                     direction = GoalDirection.valueOf(o.optString("direction", "AT_LEAST")),
                     period = ActionPeriod(
                         start = LocalDate.parse(o.getString("start")),
@@ -145,6 +163,7 @@ class PlannerStore(context: Context) {
         trackers.forEach { tracker ->
             array.put(JSONObject().apply {
                 put("id", tracker.id); put("title", tracker.title); put("category", tracker.category)
+                put("startMinutes", tracker.startMinutes ?: JSONObject.NULL); put("durationMinutes", tracker.durationMinutes)
                 put("type", tracker.type.name); put("unit", tracker.unit)
                 put("target", tracker.target ?: JSONObject.NULL)
                 put("initialTarget", tracker.initialTarget ?: JSONObject.NULL); put("weeklyStep", tracker.weeklyStep)
@@ -225,9 +244,9 @@ class PlannerStore(context: Context) {
         persist()
     }
 
-    fun addHabit(title: String, schedule: HabitSchedule = HabitSchedule.Daily) {
+    fun addHabit(title: String, schedule: HabitSchedule = HabitSchedule.Daily, startMinutes: Int? = null, durationMinutes: Int = 30) {
         if (title.isBlank()) return
-        habits += Habit(title = title.trim(), schedule = schedule.normalized())
+        habits += Habit(title = title.trim(), schedule = schedule.normalized(), startMinutes = startMinutes, durationMinutes = durationMinutes.coerceIn(15, 720))
         persist()
     }
 
@@ -238,10 +257,11 @@ class PlannerStore(context: Context) {
         persist()
     }
 
-    fun toggleHabitToday(id: String) {
+    fun toggleHabitToday(id: String) = toggleHabitOn(id, LocalDate.now())
+
+    fun toggleHabitOn(id: String, date: LocalDate) {
         val index = habits.indexOfFirst { it.id == id }
         if (index < 0) return
-        val date = LocalDate.now()
         if (!habits[index].schedule.isScheduled(date)) return
         val dateKey = date.toString()
         val dates = habits[index].completedDates.toMutableSet()
@@ -349,6 +369,8 @@ class PlannerStore(context: Context) {
                     id = o.getString("id"),
                     title = o.getString("title"),
                     completedDates = dates,
+                    startMinutes = if (o.has("startMinutes") && !o.isNull("startMinutes")) o.optInt("startMinutes").takeIf { it in 0..1439 } else null,
+                    durationMinutes = o.optInt("durationMinutes", 30).coerceIn(15, 720),
                     schedule = readHabitSchedule(o)
                 )
             }
@@ -406,6 +428,8 @@ class PlannerStore(context: Context) {
                     put("id", habit.id)
                     put("title", habit.title)
                     put("dates", JSONArray(habit.completedDates.toList()))
+                    put("startMinutes", habit.startMinutes ?: JSONObject.NULL)
+                    put("durationMinutes", habit.durationMinutes)
                     put("scheduleType", habit.schedule.type.name)
                     put("scheduleWeekdays", JSONArray(habit.schedule.weekdays.map { it.name }))
                 })

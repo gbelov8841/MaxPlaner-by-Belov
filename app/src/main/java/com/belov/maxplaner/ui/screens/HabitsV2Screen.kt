@@ -1,5 +1,10 @@
 package com.belov.maxplaner.ui.screens
 
+import com.belov.maxplaner.ui.components.TimeSlotFields
+import com.belov.maxplaner.ui.components.EditTimeSlotDialog
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import com.belov.maxplaner.data.timeRange
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -112,8 +117,8 @@ fun HabitsV2Screen(store: PlannerStore) {
             initialSchedule = HabitSchedule.Daily,
             allowName = true,
             onDismiss = { showCreate = false },
-            onSave = { name, schedule ->
-                store.addHabit(name, schedule)
+            onSave = { name, schedule, start, duration ->
+                store.addHabit(name, schedule, start, duration)
                 showCreate = false
             }
         )
@@ -123,10 +128,13 @@ fun HabitsV2Screen(store: PlannerStore) {
         HabitScheduleDialog(
             title = editingHabit.title,
             initialSchedule = editingHabit.schedule,
+            initialStart = editingHabit.startMinutes,
+            initialDuration = editingHabit.durationMinutes,
             allowName = false,
             onDismiss = { editingHabitId = null },
-            onSave = { _, schedule ->
+            onSave = { _, schedule, start, duration ->
                 store.updateHabitSchedule(editingHabit.id, schedule)
+                store.updateHabitTime(editingHabit.id, start, duration)
                 editingHabitId = null
             }
         )
@@ -135,6 +143,7 @@ fun HabitsV2Screen(store: PlannerStore) {
 
 @Composable
 private fun HabitScheduleCard(store: PlannerStore, habit: Habit, onEdit: () -> Unit) {
+    var editTime by rememberSaveable(habit.id) { mutableStateOf(false) }
     val today = LocalDate.now()
     val todayKey = today.toString()
     val completed = todayKey in habit.completedDates
@@ -177,6 +186,7 @@ private fun HabitScheduleCard(store: PlannerStore, habit: Habit, onEdit: () -> U
                 IconButton(onClick = { store.deleteHabit(habit.id) }) { Icon(Icons.Rounded.Delete, "Удалить") }
             }
 
+            TextButton(onClick = { editTime = true }) { Text(habit.startMinutes?.let { timeRange(it, habit.durationMinutes) } ?: "Назначить время") }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Rounded.LocalFireDepartment, contentDescription = null)
                 Text(" ${store.streak(habit)} подряд", style = MaterialTheme.typography.bodyMedium)
@@ -198,6 +208,7 @@ private fun HabitScheduleCard(store: PlannerStore, habit: Habit, onEdit: () -> U
             }
         }
     }
+    if (editTime) EditTimeSlotDialog(habit.title, habit.startMinutes, habit.durationMinutes, { editTime = false }) { start, duration -> store.updateHabitTime(habit.id, start, duration) }
 }
 
 @Composable
@@ -206,12 +217,17 @@ private fun HabitScheduleDialog(
     initialSchedule: HabitSchedule,
     allowName: Boolean,
     onDismiss: () -> Unit,
-    onSave: (String, HabitSchedule) -> Unit
+    initialStart: Int? = null,
+    initialDuration: Int = 30,
+    onSave: (String, HabitSchedule, Int?, Int) -> Unit
 ) {
+    var slotStart by rememberSaveable { mutableStateOf(initialStart) }
+    var slotDuration by rememberSaveable { mutableStateOf(initialDuration.toString()) }
+    val parsedDuration = slotDuration.toIntOrNull()
     var name by remember { mutableStateOf(if (allowName) "" else title) }
     var type by remember { mutableStateOf(initialSchedule.type) }
     var selectedDays by remember { mutableStateOf(initialSchedule.weekdays) }
-    val valid = name.isNotBlank() && (type == HabitScheduleType.DAILY || selectedDays.isNotEmpty())
+    val valid = (slotStart == null || parsedDuration != null && parsedDuration in 15..720) && name.isNotBlank() && (type == HabitScheduleType.DAILY || selectedDays.isNotEmpty())
 
     AlertDialog(
         shape = LocalStyleTokens.current.heroShape,
@@ -220,7 +236,7 @@ private fun HabitScheduleDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (allowName) title else "Расписание · $title") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 if (allowName) {
                     OutlinedTextField(
                         value = name,
@@ -232,6 +248,7 @@ private fun HabitScheduleDialog(
                     )
                 }
 
+                TimeSlotFields(slotStart, slotDuration, { slotStart = it }, { slotDuration = it })
                 Text("Повторять", fontWeight = FontWeight.SemiBold)
                 Row(Modifier.fillMaxWidth().selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     ScheduleModeButton(
@@ -284,7 +301,7 @@ private fun HabitScheduleDialog(
                     } else {
                         HabitSchedule(type = HabitScheduleType.WEEKDAYS, weekdays = selectedDays)
                     }
-                    onSave(name.trim(), schedule)
+                    onSave(name.trim(), schedule, slotStart, parsedDuration ?: initialDuration)
                 }
             ) { Text("Сохранить") }
         },

@@ -17,11 +17,11 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ActionSetupDialog(store: PlannerStore, onDismiss: () -> Unit, template: ActionTemplate? = null, category: String = "Личное") {
+fun ActionSetupDialog(store: PlannerStore, onDismiss: () -> Unit, template: ActionTemplate? = null, category: String = "Личное", initialDate: LocalDate = store.today, initialStartMinutes: Int? = null) {
     var title by rememberSaveable { mutableStateOf(template?.title ?: "") }
     var type by rememberSaveable { mutableStateOf(template?.type ?: TrackerType.CHECK) }
     var period by rememberSaveable { mutableStateOf(if (template?.type == TrackerType.REDUCTION_GOAL) "Повторять" else "Сегодня") }
-    var startText by rememberSaveable { mutableStateOf(store.today.toString()) }
+    var startText by rememberSaveable { mutableStateOf(initialDate.toString()) }
     var dayMask by rememberSaveable { mutableStateOf(127) }
     var showDate by rememberSaveable { mutableStateOf(false) }
     var targetText by rememberSaveable { mutableStateOf(template?.target?.let(::displayNumber) ?: "") }
@@ -30,6 +30,9 @@ fun ActionSetupDialog(store: PlannerStore, onDismiss: () -> Unit, template: Acti
     var stepText by rememberSaveable { mutableStateOf("") }
     var customOptions by rememberSaveable { mutableStateOf(false) }
     var upperLimit by rememberSaveable { mutableStateOf(template?.direction == GoalDirection.AT_MOST) }
+    var startMinutes by rememberSaveable { mutableStateOf(initialStartMinutes) }
+    var durationText by rememberSaveable { mutableStateOf((template?.defaultMinutes ?: 30).toString()) }
+    val slotDuration = durationText.toIntOrNull()
     var saved by remember { mutableStateOf(false) }
     val start = LocalDate.parse(startText)
     val numeric = type !in listOf(TrackerType.CHECK, TrackerType.STREAK, TrackerType.SCALE)
@@ -38,7 +41,7 @@ fun ActionSetupDialog(store: PlannerStore, onDismiss: () -> Unit, template: Acti
     val gradual = type == TrackerType.REDUCTION_GOAL
     val initial = number(initialText)
     val step = number(stepText)
-    val valid = title.isNotBlank() && (!numeric || targetText.isBlank() || target != null) &&
+    val valid = (startMinutes == null || slotDuration != null && slotDuration in 15..720) && title.isNotBlank() && (!numeric || targetText.isBlank() || target != null) &&
         (period != "По дням недели" || dayMask != 0) &&
         (!gradual || (target != null && initial != null && initial >= target && step != null && step > 0 && initial % 1.0 == 0.0 && step % 1.0 == 0.0))
     val days = DayOfWeek.entries.filter { dayMask and (1 shl (it.value - 1)) != 0 }.toSet()
@@ -79,6 +82,7 @@ fun ActionSetupDialog(store: PlannerStore, onDismiss: () -> Unit, template: Acti
                     OutlinedTextField(stepText, { stepText = it }, label = { Text("Снижать каждую неделю на") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
                     Text("Лимит меняется каждые 7 дней от даты начала до указанной цели.", style = MaterialTheme.typography.bodySmall)
                 }
+                TimeSlotFields(startMinutes, durationText, { startMinutes = it }, { durationText = it })
                 Text("Когда выполнять", style = MaterialTheme.typography.titleSmall)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     periodOptions.forEach { label ->
@@ -111,13 +115,14 @@ fun ActionSetupDialog(store: PlannerStore, onDismiss: () -> Unit, template: Acti
                 )
                 val actionCategory = template?.category?.title ?: category
                 if (type == TrackerType.CHECK && actionPeriod.end == actionPeriod.start) {
-                    store.addTask(title = title, dueDate = start.toString(), category = actionCategory, durationMinutes = template?.defaultMinutes ?: 30,
+                    store.addTask(title = title, dueDate = start.toString(), category = actionCategory, startMinutes = startMinutes, durationMinutes = slotDuration ?: 30,
                         priority = template?.priority ?: 2, focus = template?.priority == 3,
                         checklist = if (template?.title == "3 главных дела") (1..3).map { ChecklistItem(title = "Главный результат $it") } else emptyList())
                 } else {
                     store.addTracker(Tracker(title = title, category = actionCategory, type = type, unit = unit,
                         target = if (numeric) target else null,
                         direction = if (!numeric || target == null) GoalDirection.RECORD else if (upperLimit) GoalDirection.AT_MOST else GoalDirection.AT_LEAST,
+                        startMinutes = startMinutes, durationMinutes = slotDuration ?: 30,
                         period = actionPeriod, initialTarget = if (gradual) initial else null, weeklyStep = if (gradual) step!! else 0.0))
                 }
                 onDismiss()

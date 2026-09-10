@@ -107,7 +107,7 @@ fun TasksV2Screen(store: PlannerStore) {
                             textDecoration = if (task.completed) TextDecoration.LineThrough else null
                         )
                         Text(
-                            task.category,
+                            task.startMinutes?.let { com.belov.maxplaner.data.timeRange(it, task.durationMinutes) } ?: task.category,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

@@ -28,7 +28,9 @@ data class Tracker(
     val period: ActionPeriod,
     val values: Map<String, Double> = emptyMap(),
     val initialTarget: Double? = null,
-    val weeklyStep: Double = 0.0
+    val weeklyStep: Double = 0.0,
+    val startMinutes: Int? = null,
+    val durationMinutes: Int = 30
 ) {
     fun targetOn(date: LocalDate): Double? {
         val goal = target ?: return null

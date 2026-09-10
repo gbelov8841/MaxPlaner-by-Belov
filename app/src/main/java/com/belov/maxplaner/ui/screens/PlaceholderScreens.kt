@@ -1,6 +1,10 @@
 package com.belov.maxplaner.ui.screens
 
 import com.belov.maxplaner.ui.components.TaskEditorDialog
+import com.belov.maxplaner.ui.components.DayTimeline
+import com.belov.maxplaner.ui.components.AgendaEntryDialog
+import com.belov.maxplaner.data.AgendaItem
+import com.belov.maxplaner.data.agendaItems
 import com.belov.maxplaner.ui.components.CompletionButton
 import androidx.compose.ui.text.style.TextDecoration
 
@@ -189,8 +193,8 @@ fun CalendarScreen(store: PlannerStore) {
             }
             when (mode) {
                 CalendarMode.Day -> item { DayCalendar(store, selectedDate, onDateChange = { selectedDateText = it.toString() }) }
-                CalendarMode.Week -> item { WeekCalendar(store, selectedDate, onDateChange = { selectedDateText = it.toString() }) }
-                CalendarMode.Month -> item { MonthCalendar(store, selectedDate, onDateChange = { selectedDateText = it.toString() }) }
+                CalendarMode.Week -> item { WeekCalendar(store, selectedDate, onDateChange = { selectedDateText = it.toString(); mode = CalendarMode.Day }) }
+                CalendarMode.Month -> item { MonthCalendar(store, selectedDate, onDateChange = { selectedDateText = it.toString(); mode = CalendarMode.Day }) }
             }
         }
         FloatingActionButton(
@@ -294,45 +298,14 @@ private fun DayCalendar(store: PlannerStore, date: LocalDate, onDateChange: (Loc
             }
         }
 
-        val unscheduled = store.tasks.filter { it.dueDate == date.toString() && it.startMinutes == null }
-        if (unscheduled.isNotEmpty()) {
-            PlannerCard(shape = LocalStyleTokens.current.cardShape, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Без времени", fontWeight = FontWeight.SemiBold)
-                    unscheduled.forEach { CalendarTaskRow(it) { store.toggleTask(it.id) } }
-                }
-            }
-        }
+        var selectedKey by rememberSaveable(date.toString()) { mutableStateOf<String?>(null) }
+        var addAt by rememberSaveable(date.toString()) { mutableStateOf<Int?>(null) }
+        DayTimeline(store, date, onOpen = { selectedKey = it.key }, onAdd = { addAt = it })
+        val selected = (agendaItems(store.tasks, store.habits, store.trackers, date) +
+            agendaItems(store.tasks, store.habits, store.trackers, date.minusDays(1))).firstOrNull { it.key == selectedKey }
+        if (selected != null) AgendaEntryDialog(store, selected) { selectedKey = null }
+        if (addAt != null) TaskEditorDialog(store = store, initialDate = date, initialStartMinutes = addAt, onDismiss = { addAt = null })
 
-        PlannerCard(hero = true, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-            Column(Modifier.fillMaxWidth().padding(12.dp)) {
-                val scheduledHours = store.tasks.filter { it.dueDate == date.toString() }
-                    .mapNotNull { it.startMinutes?.div(60) }
-                val firstHour = minOf(6, scheduledHours.minOrNull() ?: 6)
-                val lastHour = maxOf(22, scheduledHours.maxOrNull() ?: 22)
-                for (hour in firstHour..lastHour) {
-                    val hourStart = hour * 60
-                    val hourTasks = store.tasks
-                        .filter { it.dueDate == date.toString() && (it.startMinutes ?: -1) in hourStart until (hourStart + 60) }
-                        .sortedBy { it.startMinutes }
-                    Row(Modifier.fillMaxWidth().padding(vertical = 7.dp), verticalAlignment = Alignment.Top) {
-                        Text(String.format("%02d:00", hour), modifier = Modifier.width(54.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            if (date == today && now.hour == hour) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Box(Modifier.height(2.dp).weight(1f).background(MaterialTheme.colorScheme.primary))
-                                    Text("  Сейчас ${now.format(DateTimeFormatter.ofPattern("HH:mm"))}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-                                }
-                            }
-                            hourTasks.forEach { TimeBlock(it) { store.toggleTask(it.id) } }
-                            if (hourTasks.isEmpty() && !(date == today && now.hour == hour)) {
-                                Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outlineVariant))
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -391,7 +364,9 @@ private fun WeekCalendar(store: PlannerStore, selectedDate: LocalDate, onDateCha
                         Text(day.dayOfWeek.getDisplayName(TextStyle.FULL, locale).replaceFirstChar { it.uppercase() }, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                         Text(day.dayOfMonth.toString(), style = MaterialTheme.typography.titleLarge)
                     }
-                    if (tasks.isEmpty()) Text("Свободно", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    val otherCount = agendaItems(store.tasks, store.habits, store.trackers, day).size - tasks.size
+                    if (otherCount > 0) Text("Привычки и действия: $otherCount · открыть день", style = MaterialTheme.typography.bodySmall)
+                    if (tasks.isEmpty() && otherCount == 0) Text("Свободно", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     tasks.forEach { task ->
                         CalendarTaskRow(task) { store.toggleTask(task.id) }
                     }
@@ -431,7 +406,7 @@ private fun MonthCalendar(store: PlannerStore, selectedDate: LocalDate, onDateCh
                     if (day == null) {
                         Spacer(Modifier.weight(1f).height(56.dp))
                     } else {
-                        val count = store.tasks.count { it.dueDate == day.toString() }
+                        val count = agendaItems(store.tasks, store.habits, store.trackers, day).size
                         val active = day == selectedDate
                         PlannerSurface(
                             modifier = Modifier.weight(1f).height(56.dp).clickable { onDateChange(day) },

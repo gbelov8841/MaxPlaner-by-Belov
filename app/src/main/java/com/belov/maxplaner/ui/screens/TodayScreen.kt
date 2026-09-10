@@ -111,7 +111,7 @@ fun TodayScreen(store: PlannerStore) {
                         CompletionButton(today in habit.completedDates, habit.title) { store.toggleHabitToday(habit.id) }
                         Column(Modifier.weight(1f)) {
                             Text(habit.title, style = MaterialTheme.typography.titleMedium)
-                            Text("Привычка · серия ${store.streak(habit)}", style = MaterialTheme.typography.bodySmall,
+                            Text((habit.startMinutes?.let { com.belov.maxplaner.data.timeRange(it, habit.durationMinutes) + " · " } ?: "Привычка · ") + "серия ${store.streak(habit)}", style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }

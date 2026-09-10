@@ -19,20 +19,21 @@ import com.belov.maxplaner.data.*
 import com.belov.maxplaner.ui.theme.LocalStyleTokens
 
 @Composable
-fun TrackerCard(store: PlannerStore, tracker: Tracker) {
-    val date = store.today
+fun TrackerCard(store: PlannerStore, tracker: Tracker, date: java.time.LocalDate = store.today) {
     val value = tracker.values[date.toString()]
     val goal = tracker.targetOn(date)
     val active = tracker.period.includes(date)
     val check = tracker.type == TrackerType.CHECK || tracker.type == TrackerType.STREAK
     var edit by rememberSaveable(tracker.id) { mutableStateOf(false) }
     var draft by rememberSaveable(tracker.id) { mutableStateOf("") }
+    var editTime by rememberSaveable(tracker.id) { mutableStateOf(false) }
     var delete by rememberSaveable(tracker.id) { mutableStateOf(false) }
     val tokens = LocalStyleTokens.current
     PlannerCard(modifier = Modifier.fillMaxWidth().clickable { draft = value?.let(::displayNumber) ?: ""; edit = true }, shape = tokens.compactShape) {
         Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(tracker.title, style = MaterialTheme.typography.titleMedium)
-            if (!active) Text("Сегодня не запланировано", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+            TextButton(onClick = { editTime = true }) { Text(tracker.startMinutes?.let { timeRange(it, tracker.durationMinutes) } ?: "Назначить время") }
+            if (!active) Text("На этот день не запланировано", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
             if (check && active) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     CompletionButton(tracker.isComplete(date), tracker.title) { store.setTrackerValue(tracker.id, date, if (tracker.isComplete(date)) null else 1.0) }
@@ -69,7 +70,7 @@ fun TrackerCard(store: PlannerStore, tracker: Tracker) {
         AlertDialog(onDismissRequest = { edit = false }, title = { Text(tracker.title) }, text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(if (tracker.period.end == null) "С ${tracker.period.start} · повторяется" else "${tracker.period.start} — ${tracker.period.end}")
-                if (active && !check) OutlinedTextField(draft, { draft = it }, label = { Text(if (tracker.unit.isBlank()) "Значение за сегодня" else "Сегодня, ${tracker.unit}") },
+                if (active && !check) OutlinedTextField(draft, { draft = it }, label = { Text(if (tracker.unit.isBlank()) "Значение за $date" else "$date, ${tracker.unit}") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true,
                     isError = draft.isNotBlank() && !valid, supportingText = { Text(if (tracker.type == TrackerType.SCALE) "Целое число от 1 до 5" else "Ноль — тоже запись. Пустое поле удаляет запись.") })
                 val history = tracker.values.toSortedMap(compareByDescending { it }).entries.take(14)
@@ -83,6 +84,7 @@ fun TrackerCard(store: PlannerStore, tracker: Tracker) {
             if (active && !check) TextButton(enabled = draft.isBlank() || valid, onClick = { store.setTrackerValue(tracker.id, date, if (draft.isBlank()) null else numeric); edit = false }) { Text("Сохранить") }
         }, dismissButton = { TextButton(onClick = { edit = false }) { Text("Закрыть") } })
     }
+    if (editTime) EditTimeSlotDialog(tracker.title, tracker.startMinutes, tracker.durationMinutes, { editTime = false }) { start, duration -> store.updateTrackerTime(tracker.id, start, duration) }
     if (delete) AlertDialog(onDismissRequest = { delete = false }, title = { Text("Удалить действие?") }, text = { Text("«${tracker.title}» и его записи будут удалены.") },
         confirmButton = { TextButton(onClick = { store.deleteTracker(tracker.id); delete = false; edit = false }) { Text("Удалить") } },
         dismissButton = { TextButton(onClick = { delete = false }) { Text("Отмена") } })
