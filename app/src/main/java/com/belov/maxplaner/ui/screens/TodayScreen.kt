@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
+import androidx.compose.animation.animateContentSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -91,12 +92,20 @@ fun TodayScreen(store: PlannerStore) {
             }
         }
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { showCatalog = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                    Text("Выбрать готовое", maxLines = 1)
-                }
-                OutlinedButton(onClick = { showAdd = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                    Text("Создать своё", maxLines = 1)
+            PlannerCard(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                Column(Modifier.fillMaxWidth().padding(tokens.cardPadding).animateContentSize(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Добавить в день", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text("Готовое действие — быстрее. Своё — когда нужен особый вариант.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Button(onClick = { showCatalog = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), shape = tokens.pillShape) {
+                        Icon(Icons.Rounded.AutoAwesome, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Выбрать готовое", maxLines = 1)
+                    }
+                    OutlinedButton(onClick = { showAdd = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), shape = tokens.pillShape) {
+                        Icon(Icons.Rounded.Edit, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Создать своё", maxLines = 1)
+                    }
                 }
             }
         }
@@ -146,7 +155,10 @@ fun TodayScreen(store: PlannerStore) {
 
 @Composable
 private fun SectionTitle(title: String) {
-    Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 6.dp))
+    Column(modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 2.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f))
+    }
 }
 
 @Composable
