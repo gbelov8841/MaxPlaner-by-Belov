@@ -31,7 +31,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.belov.maxplaner.data.PlannerStore
-import com.belov.maxplaner.ui.screens.AnalyticsScreen
+import com.belov.maxplaner.ui.screens.AnalyticsV2Screen
 import com.belov.maxplaner.ui.screens.AppearanceScreen
 import com.belov.maxplaner.ui.screens.CalendarScreen
 import com.belov.maxplaner.ui.screens.HabitsV2Screen
@@ -98,7 +98,7 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
                 composable("calendar") { CalendarScreen(store) }
                 composable("tasks") { TasksV2Screen(store) }
                 composable("habits") { HabitsV2Screen(store) }
-                composable("analytics") { AnalyticsScreen(store) }
+                composable("analytics") { AnalyticsV2Screen(store) }
                 composable("appearance") { AppearanceScreen(appearance) }
             }
         }
