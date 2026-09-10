@@ -4,7 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.remember
 import com.belov.maxplaner.ui.MaxPlanerApp
+import com.belov.maxplaner.ui.theme.AppearanceStore
 import com.belov.maxplaner.ui.theme.MaxPlanerTheme
 
 class MainActivity : ComponentActivity() {
@@ -12,8 +14,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MaxPlanerTheme {
-                MaxPlanerApp()
+            val appearance = remember { AppearanceStore(applicationContext) }
+            MaxPlanerTheme(appearance) {
+                MaxPlanerApp(appearance)
             }
         }
     }
