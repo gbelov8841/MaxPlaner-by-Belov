@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
@@ -82,12 +84,23 @@ fun HabitsV2Screen(store: PlannerStore) {
         verticalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)
     ) {
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Привычки", style = MaterialTheme.typography.headlineLarge)
+            val todayDone = store.habits.count { LocalDate.now().toString() in it.completedDates }
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("Привычки", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold)
                 Text("Гибкий ритм без давления и чувства вины", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Button(onClick = { showCreate = true }, modifier = Modifier.padding(top = 8.dp)) {
+                PlannerCard(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+                    Row(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalAlignment = Alignment.CenterVertically) {
+                        Text("🔥", style = MaterialTheme.typography.headlineMedium)
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("Сегодня", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                            Text(if (store.habits.isEmpty()) "Добавь первую привычку" else "$todayDone из ${store.habits.size} отмечено", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+                Button(onClick = { showCreate = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), shape = LocalStyleTokens.current.pillShape) {
                     Icon(Icons.Rounded.Add, contentDescription = null)
-                    Text("  Новая привычка")
+                    Text("  Новая привычка", maxLines = 1)
                 }
             }
         }
@@ -186,7 +199,18 @@ private fun HabitScheduleCard(store: PlannerStore, habit: Habit, onEdit: () -> U
                 IconButton(onClick = { store.deleteHabit(habit.id) }) { Icon(Icons.Rounded.Delete, "Удалить") }
             }
 
-            TextButton(onClick = { editTime = true }) { Text(habit.startMinutes?.let { timeRange(it, habit.durationMinutes) } ?: "Назначить время") }
+            PlannerSurface(
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable { editTime = true },
+                shape = LocalStyleTokens.current.compactShape,
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("🕒")
+                    Spacer(Modifier.width(8.dp))
+                    Text(habit.startMinutes?.let { timeRange(it, habit.durationMinutes) } ?: "Назначить время", modifier = Modifier.weight(1f), fontWeight = FontWeight.Medium)
+                    Text("Изменить", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                }
+            }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Rounded.LocalFireDepartment, contentDescription = null)
                 Text(" ${store.streak(habit)} подряд", style = MaterialTheme.typography.bodyMedium)
