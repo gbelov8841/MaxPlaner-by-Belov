@@ -123,7 +123,7 @@ fun TasksV2Screen(store: PlannerStore) {
 }
 
 @Composable
-private fun ActionCatalogDialog(
+internal fun ActionCatalogDialog(
     onDismiss: () -> Unit,
     onAdd: (String, String, Int, Int) -> Unit
 ) {

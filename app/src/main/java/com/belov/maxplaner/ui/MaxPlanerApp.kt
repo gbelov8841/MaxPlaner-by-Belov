@@ -46,7 +46,7 @@ private data class Tab(val route: String, val label: String, val icon: androidx.
 private val tabs = listOf(
     Tab("today", "Сегодня", Icons.Rounded.Home),
     Tab("calendar", "Календарь", Icons.Rounded.CalendarMonth),
-    Tab("tasks", "Задачи", Icons.Rounded.CheckCircle),
+    Tab("tasks", "Дела", Icons.Rounded.CheckCircle),
     Tab("habits", "Привычки", Icons.Rounded.Spa),
     Tab("analytics", "Прогресс", Icons.Rounded.Analytics),
     Tab("appearance", "Стиль", Icons.Rounded.Palette)
@@ -86,7 +86,8 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
                             }
                         },
                         icon = { Icon(tab.icon, contentDescription = tab.label) },
-                        label = { Text(tab.label) }
+                        label = { Text(tab.label, maxLines = 1) },
+                        alwaysShowLabel = route == tab.route
                     )
                 }
             }

@@ -31,156 +31,129 @@ import java.util.Locale
 
 @Composable
 fun TodayScreen(store: PlannerStore) {
-    val date = store.today
     var selectedTaskId by rememberSaveable { mutableStateOf<String?>(null) }
-    val listState = rememberLazyListState()
+    var showAdd by rememberSaveable { mutableStateOf(false) }
+    var showCatalog by rememberSaveable { mutableStateOf(false) }
     val selectedTask = store.tasks.firstOrNull { it.id == selectedTaskId }
     if (selectedTask != null) {
-        TaskDetailScreen(store, selectedTask, onBack = { selectedTaskId = null })
+        TaskDetailScreen(store, selectedTask) { selectedTaskId = null }
         return
     }
-    val today = date.toString()
-    val todayTasks = store.tasks.filter { it.dueDate == today }
+    val today = store.today.toString()
+    val tasks = store.tasks.filter { it.dueDate == today }
         .sortedWith(compareBy({ it.completed }, { !it.isFocus }, { -it.priority }, { it.startMinutes ?: Int.MAX_VALUE }))
-    val done = todayTasks.count { it.completed }
-    val habitsDone = store.habits.count { it.completedDates.contains(today) }
-    val totalHabits = store.habits.size
-    val progressParts = todayTasks.size + totalHabits
-    val progress = if (progressParts == 0) 0f else (done + habitsDone).toFloat() / progressParts
-    var showAdd by rememberSaveable { mutableStateOf(false) }
-    val formatter = DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale("ru"))
-
+    val habits = store.habits.filter { it.schedule.isScheduled(store.today) }
+    val done = tasks.count { it.completed } + habits.count { today in it.completedDates }
+    val total = tasks.size + habits.size
+    val progress = if (total == 0) 0f else done.toFloat() / total
+    val keyTasks = tasks.filter { !it.completed }.take(3)
+    val greeting = when (java.time.LocalTime.now().hour) {
+        in 5..11 -> "Доброе утро"
+        in 12..17 -> "Добрый день"
+        in 18..22 -> "Добрый вечер"
+        else -> "Доброй ночи"
+    }
+    val tokens = LocalStyleTokens.current
     LazyColumn(
-        state = listState,
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = LocalStyleTokens.current.screenPadding, end = LocalStyleTokens.current.screenPadding, top = 20.dp, bottom = 28.dp),
-        verticalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)
+        state = rememberLazyListState(), modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = tokens.screenPadding, end = tokens.screenPadding, top = 20.dp, bottom = 28.dp),
+        verticalArrangement = Arrangement.spacedBy(tokens.sectionSpacing)
     ) {
         item {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("MaxPlaner", style = MaterialTheme.typography.titleLarge)
-                    Text(date.format(formatter).replaceFirstChar { it.uppercase() }, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                PlannerSurface(shape = LocalStyleTokens.current.iconShape, color = MaterialTheme.colorScheme.surfaceVariant) {
-                    Icon(Icons.Rounded.Person, null, Modifier.padding(11.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(store.today.format(DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale("ru"))).replaceFirstChar { it.uppercase() },
+                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(greeting, style = MaterialTheme.typography.headlineMedium)
+            }
+        }
+        item {
+            PlannerCard(hero = true, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+                Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(if (total == 0) "Каким будет твой день?" else if (done == total) "Всё на сегодня выполнено" else "Сегодня выполнено",
+                        style = MaterialTheme.typography.titleLarge)
+                    if (total > 0) {
+                        Text("$done из $total", style = MaterialTheme.typography.headlineLarge)
+                        PlannerProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
+                    } else Text("Выбери готовое действие или начни со своего дела.", style = MaterialTheme.typography.bodyLarge)
                 }
             }
         }
-
+        if (keyTasks.isNotEmpty()) {
+            item { SectionTitle("Главное на сегодня") }
+            items(keyTasks, key = { "key-${it.id}" }) { task ->
+                TodayTaskRow(store, task, true) { selectedTaskId = task.id }
+            }
+        }
         item {
-            PlannerCard(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                hero = true
-            ) {
-                Column(Modifier.padding(LocalStyleTokens.current.cardPadding), verticalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = { showCatalog = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                    Text("Выбрать готовое", maxLines = 1)
+                }
+                OutlinedButton(onClick = { showAdd = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                    Text("Создать своё", maxLines = 1)
+                }
+            }
+        }
+        if (total > 0) {
+            item { SectionTitle("Сегодня по плану") }
+            items(tasks, key = { "task-${it.id}" }) { task ->
+                TodayTaskRow(store, task, false) { selectedTaskId = task.id }
+            }
+            items(habits, key = { "habit-${it.id}" }) { habit ->
+                PlannerCard(modifier = Modifier.fillMaxWidth(), shape = tokens.compactShape) {
+                    Row(Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                        CompletionButton(today in habit.completedDates, habit.title) { store.toggleHabitToday(habit.id) }
                         Column(Modifier.weight(1f)) {
-                            Text("Добрый день", color = MaterialTheme.colorScheme.onPrimaryContainer)
-                            Text(if (progressParts > 0 && done + habitsDone == progressParts) "Всё на сегодня." else "Сделай главное.", style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                        }
-                        PlannerSurface(shape = LocalStyleTokens.current.cardShape, color = MaterialTheme.colorScheme.surface.copy(alpha = LocalStyleTokens.current.insetSurfaceAlpha)) {
-                            Text("${(progress * 100).toInt()}%", Modifier.padding(horizontal = 15.dp, vertical = 10.dp), fontWeight = FontWeight.Bold)
+                            Text(habit.title, style = MaterialTheme.typography.titleMedium)
+                            Text("Привычка · серия ${store.streak(habit)}", style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
-                    PlannerProgressIndicator(
-                        progress = { progress },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Text("Прогресс дня", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = .75f))
                 }
             }
         }
-
-        item {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                PremiumMetric(Icons.Rounded.CheckCircle, "$done/${todayTasks.size}", "Задачи", Modifier.weight(1f))
-                PremiumMetric(Icons.Rounded.Spa, "$habitsDone/$totalHabits", "Привычки", Modifier.weight(1f))
-                PremiumMetric(Icons.Rounded.Timer, "${store.focusMinutes}м", "Фокус", Modifier.weight(1f))
-            }
-        }
-
-        item {
-            val focus = todayTasks.firstOrNull { it.isFocus && !it.completed }
-                ?: todayTasks.firstOrNull { !it.completed }
-            PlannerCard(
-                modifier = Modifier.clickable { if (focus != null) selectedTaskId = focus.id else showAdd = true },
-                shape = LocalStyleTokens.current.cardShape,
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Row(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalAlignment = Alignment.CenterVertically) {
-                    PlannerSurface(shape = LocalStyleTokens.current.iconShape, color = MaterialTheme.colorScheme.primaryContainer) {
-                        Icon(Icons.Rounded.TrackChanges, null, Modifier.padding(12.dp), tint = MaterialTheme.colorScheme.primary)
-                    }
-                    Spacer(Modifier.width(14.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(if (focus?.isFocus == true) "Сегодня в фокусе" else "Следующая задача", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(focus?.title ?: "Выбери главный результат дня", style = MaterialTheme.typography.titleMedium)
-                    }
-                    Icon(if (focus == null) Icons.Rounded.Add else Icons.Rounded.ChevronRight, null)
-                }
-            }
-        }
-
+        item { SectionTitle("Фокус") }
         item { FocusTimer(store) }
-
-        item {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("Сегодня", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.weight(1f))
-                FilledTonalButton(onClick = { showAdd = true }, contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)) {
-                    Icon(Icons.Rounded.Add, null)
-                    Text(" Добавить")
-                }
-            }
-        }
-
-        if (todayTasks.isEmpty()) {
+        if (total > 0 || store.focusMinutes > 0) {
             item {
-                PlannerCard(shape = LocalStyleTokens.current.cardShape) {
-                    Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding)) {
-                        Text("День пока свободен", fontWeight = FontWeight.SemiBold)
-                        Spacer(Modifier.height(5.dp))
-                        Text("Добавь несколько действительно важных дел — MaxPlaner поможет не перегружать день.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-            }
-        } else {
-            items(todayTasks, key = { it.id }) { task ->
-                PlannerCard(
-                    modifier = Modifier.clickable { selectedTaskId = task.id },
-                    shape = LocalStyleTokens.current.compactShape,
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                ) {
-                    Row(Modifier.fillMaxWidth().padding(vertical = 9.dp, horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                        CompletionButton(task.completed, task.title) { store.toggleTask(task.id) }
-                        Column(Modifier.weight(1f)) {
-                            Text(task.title, fontWeight = FontWeight.Medium, textDecoration = if (task.completed) TextDecoration.LineThrough else null)
-                            Text(
-                                buildString {
-                                    task.startMinutes?.let { append("%02d:%02d · %d мин · ".format(it / 60, it % 60, task.durationMinutes)) }
-                                    append(when (task.priority) { 3 -> "Высокий приоритет"; 1 -> "Низкий приоритет"; else -> "Обычный приоритет" })
-                                },
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = if (task.priority == 3) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        if (task.isFocus) Icon(Icons.Rounded.Star, "Фокус", tint = MaterialTheme.colorScheme.secondary)
+                PlannerCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Итог дня", style = MaterialTheme.typography.titleMedium)
+                        if (total > 0) Text("Выполнено $done из $total")
+                        val streak = habits.maxOfOrNull { store.streak(it) } ?: 0
+                        if (streak > 0) Text("Самая длинная текущая серия: $streak")
+                        if (store.focusMinutes > 0) Text("Фокус за всё время: ${store.focusMinutes} мин", style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
         }
     }
-
     if (showAdd) TaskEditorDialog(store = store, onDismiss = { showAdd = false })
+    if (showCatalog) ActionCatalogDialog(onDismiss = { showCatalog = false }, onAdd = { title, category, minutes, priority ->
+        store.addTask(title = title, category = category, durationMinutes = minutes, priority = priority)
+        showCatalog = false
+    })
 }
 
 @Composable
-private fun PremiumMetric(icon: androidx.compose.ui.graphics.vector.ImageVector, value: String, label: String, modifier: Modifier = Modifier) {
-    PlannerCard(modifier, shape = LocalStyleTokens.current.compactShape, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-        Column(Modifier.padding(13.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            Icon(icon, null, tint = MaterialTheme.colorScheme.primary)
-            Text(value, style = MaterialTheme.typography.titleLarge)
-            Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun SectionTitle(title: String) {
+    Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 6.dp))
+}
+
+@Composable
+private fun TodayTaskRow(store: PlannerStore, task: com.belov.maxplaner.data.PlannerTask, prominent: Boolean, onOpen: () -> Unit) {
+    PlannerCard(modifier = Modifier.fillMaxWidth().clickable(onClick = onOpen), shape = LocalStyleTokens.current.compactShape,
+        colors = CardDefaults.cardColors(containerColor = if (prominent) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface)) {
+        Row(Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            CompletionButton(task.completed, task.title) { store.toggleTask(task.id) }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(task.title, style = MaterialTheme.typography.titleMedium,
+                    textDecoration = if (task.completed) TextDecoration.LineThrough else null)
+                Text(task.startMinutes?.let { "%02d:%02d · %d мин".format(it / 60, it % 60, task.durationMinutes) } ?: task.category,
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(Icons.Rounded.ChevronRight, "Открыть детали", tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
