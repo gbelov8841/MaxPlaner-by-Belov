@@ -115,7 +115,7 @@ fun TaskEditorDialog(
         shape = tokens.heroShape,
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = tokens.heroElevation,
-        title = { Text(if (task == null) "Новая задача" else "Изменить задачу") },
+        title = { Text(if (task == null) "Новое дело" else "Изменить дело") },
         text = {
             Column(
                 Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),

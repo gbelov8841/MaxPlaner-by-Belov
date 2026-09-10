@@ -45,6 +45,7 @@ class PlannerStore(context: Context) {
     private val prefs = context.getSharedPreferences("maxplaner_store", Context.MODE_PRIVATE)
     val tasks = mutableStateListOf<PlannerTask>()
     val habits = mutableStateListOf<Habit>()
+    val trackers = mutableStateListOf<Tracker>()
     private val bootId = runCatching { Settings.Global.getInt(context.contentResolver, Settings.Global.BOOT_COUNT, -1) }.getOrDefault(-1)
     var focusClock by mutableStateOf(readFocusClock())
         private set
@@ -57,6 +58,7 @@ class PlannerStore(context: Context) {
     init {
         refreshFocus()
         load()
+        loadTrackers()
         if (tasks.isEmpty() && habits.isEmpty() && !prefs.getBoolean("seeded", false)) {
             tasks += PlannerTask(
                 title = "Сформулировать 3 главных результата дня",
@@ -84,6 +86,75 @@ class PlannerStore(context: Context) {
             persist()
             prefs.edit().putBoolean("seeded", true).apply()
         }
+    }
+
+    fun addTracker(tracker: Tracker) {
+        if (tracker.title.isBlank() || tracker.period.weekdays.isEmpty()) return
+        trackers += tracker.copy(title = tracker.title.trim())
+        persistTrackers()
+    }
+
+    fun setTrackerValue(id: String, date: LocalDate, value: Double?) {
+        val index = trackers.indexOfFirst { it.id == id }
+        if (index < 0) return
+        val tracker = trackers[index]
+        if (!tracker.period.includes(date) || (value != null && !tracker.accepts(value))) return
+        val values = tracker.values.toMutableMap()
+        if (value == null) values.remove(date.toString()) else values[date.toString()] = value
+        trackers[index] = tracker.copy(values = values)
+        persistTrackers()
+    }
+
+    fun deleteTracker(id: String) {
+        trackers.removeAll { it.id == id }
+        persistTrackers()
+    }
+
+    private fun loadTrackers() {
+        val array = runCatching { JSONArray(prefs.getString("trackers_v1", "[]")) }.getOrNull() ?: return
+        repeat(array.length()) { i ->
+            // One malformed record must not prevent loading other records or legacy data.
+            runCatching {
+                val o = array.getJSONObject(i)
+                val values = o.optJSONObject("values") ?: JSONObject()
+                val weekdays = o.getJSONArray("weekdays")
+                val tracker = Tracker(
+                    id = o.getString("id"), title = o.getString("title"), category = o.optString("category", "Личное"),
+                    type = TrackerType.valueOf(o.getString("type")), unit = o.optString("unit", ""),
+                    target = if (o.isNull("target")) null else o.getDouble("target"),
+                    initialTarget = if (o.isNull("initialTarget")) null else o.getDouble("initialTarget"),
+                    weeklyStep = o.optDouble("weeklyStep", 0.0),
+                    direction = GoalDirection.valueOf(o.optString("direction", "AT_LEAST")),
+                    period = ActionPeriod(
+                        start = LocalDate.parse(o.getString("start")),
+                        end = o.optString("end").takeIf { it.isNotBlank() }?.let(LocalDate::parse),
+                        weekdays = buildSet { repeat(weekdays.length()) { add(DayOfWeek.valueOf(weekdays.getString(it))) } }
+                    ),
+                    values = values.keys().asSequence().mapNotNull { key ->
+                        val number = values.optDouble(key, Double.NaN)
+                        if (number.isFinite() && number >= 0) key to number else null
+                    }.toMap()
+                )
+                trackers += tracker
+            }
+        }
+    }
+
+    private fun persistTrackers() {
+        val array = JSONArray()
+        trackers.forEach { tracker ->
+            array.put(JSONObject().apply {
+                put("id", tracker.id); put("title", tracker.title); put("category", tracker.category)
+                put("type", tracker.type.name); put("unit", tracker.unit)
+                put("target", tracker.target ?: JSONObject.NULL)
+                put("initialTarget", tracker.initialTarget ?: JSONObject.NULL); put("weeklyStep", tracker.weeklyStep)
+                put("direction", tracker.direction.name); put("start", tracker.period.start.toString())
+                put("end", tracker.period.end?.toString() ?: "")
+                put("weekdays", JSONArray(tracker.period.weekdays.map { it.name }))
+                put("values", JSONObject(tracker.values))
+            })
+        }
+        prefs.edit().putString("trackers_v1", array.toString()).apply()
     }
 
     fun addTask(

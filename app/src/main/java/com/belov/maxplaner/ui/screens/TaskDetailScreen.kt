@@ -49,7 +49,7 @@ internal fun TaskDetailScreen(store: PlannerStore, task: PlannerTask, onBack: ()
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack) { Icon(Icons.Rounded.ArrowBack, "Назад") }
-                Text("Детали задачи", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                Text("Детали дела", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
             }
         }
         item {
@@ -112,16 +112,16 @@ internal fun TaskDetailScreen(store: PlannerStore, task: PlannerTask, onBack: ()
         }
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedButton(onClick = { showEdit = true }, modifier = Modifier.weight(1f)) {
+                OutlinedButton(onClick = { showEdit = true }, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
                     Icon(Icons.Rounded.Edit, null)
-                    Text("  Изменить")
+                    Text("Изменить", maxLines = 1)
                 }
                 Button(onClick = {
                     store.toggleTask(task.id)
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 }, modifier = Modifier.weight(1f)) {
                     Icon(Icons.Rounded.CheckCircle, null)
-                    Text(if (task.completed) "  Вернуть" else "  Завершить")
+                    Text(if (task.completed) "Вернуть" else "Готово", maxLines = 1)
                 }
             }
         }

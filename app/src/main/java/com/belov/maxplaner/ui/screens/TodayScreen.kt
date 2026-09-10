@@ -1,6 +1,9 @@
 package com.belov.maxplaner.ui.screens
 
 import androidx.compose.runtime.saveable.rememberSaveable
+import com.belov.maxplaner.ui.components.ActionSetupDialog
+import com.belov.maxplaner.ui.components.TrackerCard
+import com.belov.maxplaner.data.TrackerType
 import com.belov.maxplaner.ui.components.TaskEditorDialog
 import com.belov.maxplaner.ui.components.CompletionButton
 import androidx.compose.ui.text.style.TextDecoration
@@ -43,8 +46,11 @@ fun TodayScreen(store: PlannerStore) {
     val tasks = store.tasks.filter { it.dueDate == today }
         .sortedWith(compareBy({ it.completed }, { !it.isFocus }, { -it.priority }, { it.startMinutes ?: Int.MAX_VALUE }))
     val habits = store.habits.filter { it.schedule.isScheduled(store.today) }
-    val done = tasks.count { it.completed } + habits.count { today in it.completedDates }
-    val total = tasks.size + habits.size
+    val trackers = store.trackers.filter { it.period.includes(store.today) }
+    val plannedActions = trackers.filter { it.type == TrackerType.CHECK || it.type == TrackerType.STREAK }
+    val metrics = trackers.filter { it.type != TrackerType.CHECK && it.type != TrackerType.STREAK }
+    val done = plannedActions.count { it.isComplete(store.today) } + tasks.count { it.completed } + habits.count { today in it.completedDates }
+    val total = tasks.size + habits.size + plannedActions.size
     val progress = if (total == 0) 0f else done.toFloat() / total
     val keyTasks = tasks.filter { !it.completed }.take(3)
     val greeting = when (java.time.LocalTime.now().hour) {
@@ -112,8 +118,13 @@ fun TodayScreen(store: PlannerStore) {
                 }
             }
         }
+        items(plannedActions, key = { "action-${it.id}" }) { TrackerCard(store, it) }
         item { SectionTitle("Фокус") }
         item { FocusTimer(store) }
+        if (metrics.isNotEmpty()) {
+            item { SectionTitle("Мои показатели") }
+            items(metrics, key = { "metric-${it.id}" }) { TrackerCard(store, it) }
+        }
         if (total > 0 || store.focusMinutes > 0) {
             item {
                 PlannerCard(modifier = Modifier.fillMaxWidth()) {
@@ -129,11 +140,8 @@ fun TodayScreen(store: PlannerStore) {
             }
         }
     }
-    if (showAdd) TaskEditorDialog(store = store, onDismiss = { showAdd = false })
-    if (showCatalog) ActionCatalogDialog(onDismiss = { showCatalog = false }, onAdd = { title, category, minutes, priority ->
-        store.addTask(title = title, category = category, durationMinutes = minutes, priority = priority)
-        showCatalog = false
-    })
+    if (showAdd) ActionSetupDialog(store, onDismiss = { showAdd = false })
+    if (showCatalog) ActionCatalogDialog(store, onDismiss = { showCatalog = false })
 }
 
 @Composable
