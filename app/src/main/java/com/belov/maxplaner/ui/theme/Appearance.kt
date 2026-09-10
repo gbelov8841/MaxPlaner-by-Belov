@@ -29,6 +29,7 @@ val MaxPlanerStyles = listOf(
         name = "Executive Glass",
         subtitle = "Премиальная глубина и стеклянные акценты",
         palettes = listOf(
+            PaletteOption("prime_navy_gold", "Prime Navy Gold", Color(0xFFE8C56A), Color(0xFF07111C), Color(0xFF0F1B29), Color(0xFF6AD7A0), true),
             PaletteOption("executive_green", "Executive Green", Color(0xFF86D69A), Color(0xFF090E0B), Color(0xFF101713), Color(0xFFD4BE98), true),
             PaletteOption("graphite_black", "Graphite Black", Color(0xFFD6D9DC), Color(0xFF08090A), Color(0xFF131517), Color(0xFF8E989F), true),
             PaletteOption("midnight_blue", "Midnight Blue", Color(0xFF5BB8FF), Color(0xFF07101B), Color(0xFF0E1A28), Color(0xFF6D78FF), true),
@@ -97,11 +98,11 @@ val MaxPlanerStyles = listOf(
 )
 
 class AppearanceStore(context: Context) {
-    private val prefs = context.getSharedPreferences("maxplaner_appearance", Context.MODE_PRIVATE)
+    private val prefs = context.getSharedPreferences("primeplaner_appearance", Context.MODE_PRIVATE)
 
     var styleId by mutableStateOf(prefs.getString("style_id", "executive_glass") ?: "executive_glass")
         private set
-    var paletteId by mutableStateOf(prefs.getString("palette_id", "executive_green") ?: "executive_green")
+    var paletteId by mutableStateOf(prefs.getString("palette_id", "prime_navy_gold") ?: "prime_navy_gold")
         private set
 
     val style: AppStyleOption
