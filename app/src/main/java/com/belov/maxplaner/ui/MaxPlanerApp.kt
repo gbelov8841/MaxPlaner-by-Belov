@@ -7,6 +7,7 @@ import androidx.compose.material.icons.rounded.Analytics
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Spa
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -25,10 +26,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.belov.maxplaner.data.PlannerStore
 import com.belov.maxplaner.ui.screens.AnalyticsScreen
+import com.belov.maxplaner.ui.screens.AppearanceScreen
 import com.belov.maxplaner.ui.screens.CalendarScreen
 import com.belov.maxplaner.ui.screens.HabitsScreen
 import com.belov.maxplaner.ui.screens.TasksV2Screen
 import com.belov.maxplaner.ui.screens.TodayScreen
+import com.belov.maxplaner.ui.theme.AppearanceStore
 
 private data class Tab(val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
 
@@ -37,11 +40,12 @@ private val tabs = listOf(
     Tab("calendar", "Календарь", Icons.Rounded.CalendarMonth),
     Tab("tasks", "Задачи", Icons.Rounded.CheckCircle),
     Tab("habits", "Привычки", Icons.Rounded.Spa),
-    Tab("analytics", "Прогресс", Icons.Rounded.Analytics)
+    Tab("analytics", "Прогресс", Icons.Rounded.Analytics),
+    Tab("appearance", "Стиль", Icons.Rounded.Palette)
 )
 
 @Composable
-fun MaxPlanerApp() {
+fun MaxPlanerApp(appearance: AppearanceStore) {
     val context = LocalContext.current
     val store = remember { PlannerStore(context.applicationContext) }
     val navController = rememberNavController()
@@ -75,6 +79,7 @@ fun MaxPlanerApp() {
                 composable("tasks") { TasksV2Screen(store) }
                 composable("habits") { HabitsScreen(store) }
                 composable("analytics") { AnalyticsScreen(store) }
+                composable("appearance") { AppearanceScreen(appearance) }
             }
         }
     }
