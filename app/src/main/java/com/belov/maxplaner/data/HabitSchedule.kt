@@ -2,6 +2,7 @@ package com.belov.maxplaner.data
 
 import java.time.DayOfWeek
 import java.time.LocalDate
+import kotlin.math.roundToInt
 
 /**
  * Defines when a habit is expected to be completed.
@@ -92,7 +93,7 @@ fun scheduledCompletionRate(
         val date = runCatching { LocalDate.parse(value) }.getOrNull() ?: return@count false
         !date.isBefore(start) && !date.isAfter(today) && schedule.isScheduled(date)
     }
-    return ((completedScheduled * 100.0) / opportunities).toInt().coerceIn(0, 100)
+    return ((completedScheduled * 100.0) / opportunities).roundToInt().coerceIn(0, 100)
 }
 
 private fun previousScheduledDay(schedule: HabitSchedule, start: LocalDate): LocalDate? {
