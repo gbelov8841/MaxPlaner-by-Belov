@@ -17,18 +17,38 @@ fun TimeSlotFields(start: Int?, durationText: String, onStart: (Int?) -> Unit, o
     var picker by rememberSaveable { mutableStateOf(false) }
     val duration = durationText.toIntOrNull()
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Время в течение дня", style = MaterialTheme.typography.titleSmall)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            AssistChip(onClick = { picker = true }, label = { Text(start?.let(::timeOfDay) ?: "Назначить время") }, modifier = Modifier.heightIn(min = 48.dp))
-            if (start != null) TextButton(onClick = { onStart(null) }) { Text("Без времени") }
+        Text("Время выполнения", style = MaterialTheme.typography.titleSmall)
+        Text(
+            "Поставь время, чтобы действие появилось на шкале дня.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        FilledTonalButton(
+            onClick = { picker = true },
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
+        ) {
+            Text(start?.let { "Начать в " + timeOfDay(it) } ?: "Назначить время", maxLines = 1)
+        }
+        if (start != null) {
+            TextButton(onClick = { onStart(null) }, modifier = Modifier.fillMaxWidth()) {
+                Text("Оставить без времени", maxLines = 1)
+            }
         }
         if (start != null) {
             OutlinedTextField(durationText, onDuration, label = { Text("Длительность, минут") },
                 singleLine = true, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 isError = duration == null || duration !in 15..720,
                 supportingText = { Text(if (duration != null && duration in 15..720) timeRange(start, duration) else "От 15 до 720 минут") })
+            Text("Быстрый выбор", style = MaterialTheme.typography.labelMedium)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                listOf(15, 30, 60, 90).forEach { minutes -> FilterChip(duration == minutes, { onDuration(minutes.toString()) }, label = { Text("$minutes мин") }) }
+                listOf(15, 30, 60, 90).forEach { minutes ->
+                    FilterChip(
+                        selected = duration == minutes,
+                        onClick = { onDuration(minutes.toString()) },
+                        label = { Text("$minutes мин", maxLines = 1) },
+                        modifier = Modifier.heightIn(min = 44.dp)
+                    )
+                }
             }
         }
     }
