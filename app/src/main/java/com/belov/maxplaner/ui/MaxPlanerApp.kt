@@ -1,0 +1,76 @@
+package com.belov.maxplaner.ui
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Analytics
+import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Spa
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.belov.maxplaner.ui.screens.AnalyticsScreen
+import com.belov.maxplaner.ui.screens.CalendarScreen
+import com.belov.maxplaner.ui.screens.HabitsScreen
+import com.belov.maxplaner.ui.screens.TasksScreen
+import com.belov.maxplaner.ui.screens.TodayScreen
+
+private data class Tab(val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
+
+private val tabs = listOf(
+    Tab("today", "Сегодня", Icons.Rounded.Home),
+    Tab("calendar", "Календарь", Icons.Rounded.CalendarMonth),
+    Tab("tasks", "Задачи", Icons.Rounded.CheckCircle),
+    Tab("habits", "Привычки", Icons.Rounded.Spa),
+    Tab("analytics", "Прогресс", Icons.Rounded.Analytics)
+)
+
+@Composable
+fun MaxPlanerApp() {
+    val navController = rememberNavController()
+    val backStack by navController.currentBackStackEntryAsState()
+    val route = backStack?.destination?.route ?: "today"
+
+    Scaffold(
+        bottomBar = {
+            NavigationBar {
+                tabs.forEach { tab ->
+                    NavigationBarItem(
+                        selected = route == tab.route,
+                        onClick = {
+                            navController.navigate(tab.route) {
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        icon = { Icon(tab.icon, contentDescription = tab.label) },
+                        label = { Text(tab.label) }
+                    )
+                }
+            }
+        }
+    ) { padding ->
+        Box(Modifier.padding(padding)) {
+            NavHost(navController, startDestination = "today") {
+                composable("today") { TodayScreen() }
+                composable("calendar") { CalendarScreen() }
+                composable("tasks") { TasksScreen() }
+                composable("habits") { HabitsScreen() }
+                composable("analytics") { AnalyticsScreen() }
+            }
+        }
+    }
+}
