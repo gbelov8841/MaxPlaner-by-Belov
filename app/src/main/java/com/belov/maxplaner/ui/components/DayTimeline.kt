@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
 import com.belov.maxplaner.data.*
@@ -89,12 +90,32 @@ fun DayTimeline(store: PlannerStore, date: LocalDate, onOpen: (AgendaItem) -> Un
                             .clip(tokens.compactShape)
                             .background(if (item.completed) Color(0xFF18242F) else Color(0xFF183149))
                             .clickable { onOpen(item) }) {
-                            Column(Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 3.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                Text((if (item.completed) "✓ " else agendaKindIcon(item.kind) + " ") + item.title, maxLines = if (segmentHeight >= 90.dp) 3 else 1,
-                                    overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.labelLarge)
-                                Text(timeRange(item.startMinutes!!, item.durationMinutes), style = MaterialTheme.typography.labelSmall,
-                                    maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                if (item.occurrenceDate < date && segmentHeight >= 90.dp) Text("Началось вчера", style = MaterialTheme.typography.labelSmall)
+                            Row(Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.Top) {
+                                Box(
+                                    Modifier.width(3.dp).fillMaxHeight()
+                                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(3.dp))
+                                        .background(if (item.completed) Color(0xFF607383) else Color(0xFFE8C56A))
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                    Text(
+                                        item.title,
+                                        maxLines = if (segmentHeight >= 90.dp) 3 else 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (item.completed) Color(0xFF91A1AE) else Color(0xFFF1F5F3)
+                                    )
+                                    Text(
+                                        timeRange(item.startMinutes!!, item.durationMinutes),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = if (item.completed) Color(0xFF718493) else Color(0xFF9FC2DD),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    if (item.occurrenceDate < date && segmentHeight >= 90.dp) Text("Началось вчера", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8FA3B3))
+                                }
+                                if (item.completed) Text("✓", color = Color(0xFF78E6A8), fontWeight = FontWeight.Bold)
                             }
                         }
                     }
