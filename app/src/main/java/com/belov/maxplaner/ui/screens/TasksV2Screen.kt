@@ -1,5 +1,6 @@
 package com.belov.maxplaner.ui.screens
 
+import com.belov.maxplaner.ui.components.TaskEditorDialog
 import com.belov.maxplaner.ui.components.CompletionButton
 import androidx.compose.ui.text.style.TextDecoration
 
@@ -33,7 +34,6 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Circle
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -61,7 +61,7 @@ import java.util.Locale
 @Composable
 fun TasksV2Screen(store: PlannerStore) {
     var selectedTaskId by rememberSaveable { mutableStateOf<String?>(null) }
-    var showAdd by remember { mutableStateOf(false) }
+    var showAdd by rememberSaveable { mutableStateOf(false) }
     val selectedTask = store.tasks.firstOrNull { it.id == selectedTaskId }
 
     if (selectedTask != null) {
@@ -127,20 +127,12 @@ fun TasksV2Screen(store: PlannerStore) {
         }
     }
 
-    if (showAdd) {
-        AddRichTaskDialog(
-            onDismiss = { showAdd = false },
-            onSave = { title, notes, category ->
-                store.addTask(title = title, notes = notes, category = category)
-                showAdd = false
-            }
-        )
-    }
+    if (showAdd) TaskEditorDialog(store = store, onDismiss = { showAdd = false })
 }
 
 @Composable
 private fun TaskDetailScreen(store: PlannerStore, task: PlannerTask, onBack: () -> Unit) {
-    var showEdit by remember { mutableStateOf(false) }
+    var showEdit by rememberSaveable { mutableStateOf(false) }
     var newChecklistItem by rememberSaveable(task.id) { mutableStateOf("") }
     val haptic = LocalHapticFeedback.current
     BackHandler(enabled = !showEdit, onBack = onBack)
@@ -234,10 +226,7 @@ private fun TaskDetailScreen(store: PlannerStore, task: PlannerTask, onBack: () 
     }
 
     if (showEdit) {
-        EditTaskDialog(task, onDismiss = { showEdit = false }) { updated ->
-            store.updateTask(updated)
-            showEdit = false
-        }
+        TaskEditorDialog(store = store, task = task, onDismiss = { showEdit = false })
     }
 }
 
@@ -262,56 +251,4 @@ private fun priorityLabel(priority: Int) = when (priority) {
     3 -> "Высокий приоритет"
     1 -> "Низкий приоритет"
     else -> "Средний приоритет"
-}
-
-@Composable
-private fun AddRichTaskDialog(onDismiss: () -> Unit, onSave: (String, String, String) -> Unit) {
-    var title by remember { mutableStateOf("") }
-    var notes by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf("Личное") }
-    AlertDialog(
-        shape = LocalStyleTokens.current.heroShape,
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = LocalStyleTokens.current.heroElevation,
-        onDismissRequest = onDismiss,
-        title = { Text("Новая задача") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(title, { title = it }, label = { Text("Название") }, singleLine = true)
-                OutlinedTextField(notes, { notes = it }, label = { Text("Заметки") })
-                OutlinedTextField(category, { category = it }, label = { Text("Категория") }, singleLine = true)
-            }
-        },
-        confirmButton = { TextButton(onClick = { if (title.isNotBlank()) onSave(title, notes, category) }) { Text("Сохранить") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } }
-    )
-}
-
-@Composable
-private fun EditTaskDialog(task: PlannerTask, onDismiss: () -> Unit, onSave: (PlannerTask) -> Unit) {
-    var title by remember(task.id) { mutableStateOf(task.title) }
-    var notes by remember(task.id) { mutableStateOf(task.notes) }
-    var category by remember(task.id) { mutableStateOf(task.category) }
-    var recurrence by remember(task.id) { mutableStateOf(task.recurrence) }
-    AlertDialog(
-        shape = LocalStyleTokens.current.heroShape,
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = LocalStyleTokens.current.heroElevation,
-        onDismissRequest = onDismiss,
-        title = { Text("Изменить задачу") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(title, { title = it }, label = { Text("Название") }, singleLine = true)
-                OutlinedTextField(notes, { notes = it }, label = { Text("Заметки") })
-                OutlinedTextField(category, { category = it }, label = { Text("Категория") }, singleLine = true)
-                OutlinedTextField(recurrence, { recurrence = it }, label = { Text("Повтор") }, singleLine = true)
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = {
-                if (title.isNotBlank()) onSave(task.copy(title = title.trim(), notes = notes.trim(), category = category.ifBlank { "Личное" }, recurrence = recurrence.ifBlank { "Не повторять" }))
-            }) { Text("Сохранить") }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } }
-    )
 }

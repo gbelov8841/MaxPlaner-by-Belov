@@ -1,5 +1,6 @@
 package com.belov.maxplaner.ui.screens
 
+import com.belov.maxplaner.ui.components.TaskEditorDialog
 import com.belov.maxplaner.ui.components.CompletionButton
 import androidx.compose.ui.text.style.TextDecoration
 
@@ -76,7 +77,7 @@ private enum class CalendarMode(val label: String) { Day("День"), Week("Не
 
 @Composable
 fun TasksScreen(store: PlannerStore) {
-    var showAdd by remember { mutableStateOf(false) }
+    var showAdd by rememberSaveable { mutableStateOf(false) }
     LazyColumn(
         Modifier.fillMaxSize().padding(horizontal = LocalStyleTokens.current.screenPadding),
         contentPadding = PaddingValues(vertical = 18.dp),
@@ -102,15 +103,12 @@ fun TasksScreen(store: PlannerStore) {
             }
         }
     }
-    if (showAdd) AddTaskDialog(onDismiss = { showAdd = false }) {
-        store.addTask(it)
-        showAdd = false
-    }
+    if (showAdd) TaskEditorDialog(store = store, onDismiss = { showAdd = false })
 }
 
 @Composable
 fun HabitsScreen(store: PlannerStore) {
-    var showAdd by remember { mutableStateOf(false) }
+    var showAdd by rememberSaveable { mutableStateOf(false) }
     val today = LocalDate.now().toString()
     LazyColumn(
         Modifier.fillMaxSize().padding(horizontal = LocalStyleTokens.current.screenPadding),
@@ -176,7 +174,7 @@ fun CalendarScreen(store: PlannerStore) {
     var mode by rememberSaveable { mutableStateOf(CalendarMode.Day) }
     var selectedDateText by rememberSaveable { mutableStateOf(LocalDate.now().toString()) }
     val selectedDate = LocalDate.parse(selectedDateText)
-    var showAdd by remember { mutableStateOf(false) }
+    var showAdd by rememberSaveable { mutableStateOf(false) }
 
     Box(Modifier.fillMaxSize()) {
         LazyColumn(
@@ -202,11 +200,11 @@ fun CalendarScreen(store: PlannerStore) {
         ) { Icon(Icons.Rounded.Add, contentDescription = "Добавить") }
     }
 
-    if (showAdd) CalendarTaskDialog(selectedDate, onDismiss = { showAdd = false }) { title, date, start, duration ->
-        store.addTask(title = title, dueDate = date.toString(), startMinutes = start, durationMinutes = duration)
-        selectedDateText = date.toString()
-        showAdd = false
-    }
+    if (showAdd) TaskEditorDialog(
+        store = store, initialDate = selectedDate, initialStartMinutes = 9 * 60,
+        onDismiss = { showAdd = false },
+        onSaved = { date -> if (date != null) selectedDateText = date.toString() }
+    )
 }
 
 @Composable
@@ -308,7 +306,11 @@ private fun DayCalendar(store: PlannerStore, date: LocalDate, onDateChange: (Loc
 
         PlannerCard(hero = true, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
             Column(Modifier.fillMaxWidth().padding(12.dp)) {
-                for (hour in 6..22) {
+                val scheduledHours = store.tasks.filter { it.dueDate == date.toString() }
+                    .mapNotNull { it.startMinutes?.div(60) }
+                val firstHour = minOf(6, scheduledHours.minOrNull() ?: 6)
+                val lastHour = maxOf(22, scheduledHours.maxOrNull() ?: 22)
+                for (hour in firstHour..lastHour) {
                     val hourStart = hour * 60
                     val hourTasks = store.tasks
                         .filter { it.dueDate == date.toString() && (it.startMinutes ?: -1) in hourStart until (hourStart + 60) }
@@ -338,7 +340,8 @@ private fun DayCalendar(store: PlannerStore, date: LocalDate, onDateChange: (Loc
 private fun TimeBlock(task: PlannerTask, onToggle: () -> Unit) {
     val start = task.startMinutes ?: 0
     val end = start + task.durationMinutes
-    val time = "%02d:%02d–%02d:%02d".format(start / 60, start % 60, end / 60, end % 60)
+    val time = "%02d:%02d–%02d:%02d".format(start / 60, start % 60, (end / 60) % 24, end % 60) +
+        if (end >= 24 * 60) " (+1 день)" else ""
     val container = when (task.priority) {
         3 -> MaterialTheme.colorScheme.primaryContainer
         1 -> MaterialTheme.colorScheme.secondaryContainer
@@ -455,48 +458,6 @@ private fun MonthCalendar(store: PlannerStore, selectedDate: LocalDate, onDateCh
             }
         }
     }
-}
-
-@Composable
-private fun CalendarTaskDialog(
-    initialDate: LocalDate,
-    onDismiss: () -> Unit,
-    onSave: (String, LocalDate, Int?, Int) -> Unit
-) {
-    var title by remember { mutableStateOf("") }
-    var dateText by remember { mutableStateOf(initialDate.toString()) }
-    var timeText by remember { mutableStateOf("09:00") }
-    var durationText by remember { mutableStateOf("60") }
-
-    AlertDialog(
-        shape = LocalStyleTokens.current.heroShape,
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = LocalStyleTokens.current.heroElevation,
-        onDismissRequest = onDismiss,
-        title = { Text("Новый блок времени") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(title, { title = it }, label = { Text("Задача") }, singleLine = true)
-                OutlinedTextField(dateText, { dateText = it }, label = { Text("Дата YYYY-MM-DD") }, singleLine = true)
-                OutlinedTextField(timeText, { timeText = it }, label = { Text("Время HH:MM") }, singleLine = true)
-                OutlinedTextField(durationText, { durationText = it }, label = { Text("Длительность, минут") }, singleLine = true)
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = {
-                val date = runCatching { LocalDate.parse(dateText) }.getOrNull() ?: return@TextButton
-                val parts = timeText.split(":")
-                val start = if (parts.size == 2) {
-                    val h = parts[0].toIntOrNull()
-                    val m = parts[1].toIntOrNull()
-                    if (h != null && m != null && h in 0..23 && m in 0..59) h * 60 + m else null
-                } else null
-                val duration = durationText.toIntOrNull()?.coerceIn(15, 720) ?: 60
-                if (title.isNotBlank()) onSave(title, date, start, duration)
-            }) { Text("Добавить") }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } }
-    )
 }
 
 @Composable

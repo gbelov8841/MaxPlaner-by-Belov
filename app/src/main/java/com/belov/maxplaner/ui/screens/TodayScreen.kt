@@ -1,5 +1,7 @@
 package com.belov.maxplaner.ui.screens
 
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.belov.maxplaner.ui.components.TaskEditorDialog
 import com.belov.maxplaner.ui.components.CompletionButton
 import androidx.compose.ui.text.style.TextDecoration
 
@@ -35,7 +37,7 @@ fun TodayScreen(store: PlannerStore) {
     val totalHabits = store.habits.size
     val progressParts = todayTasks.size + totalHabits
     val progress = if (progressParts == 0) 0f else (done + habitsDone).toFloat() / progressParts
-    var showAdd by remember { mutableStateOf(false) }
+    var showAdd by rememberSaveable { mutableStateOf(false) }
     val formatter = DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale("ru"))
 
     LazyColumn(
@@ -146,7 +148,7 @@ fun TodayScreen(store: PlannerStore) {
         }
     }
 
-    if (showAdd) AddTaskDialog(onDismiss = { showAdd = false }, onSave = { store.addTask(it); showAdd = false })
+    if (showAdd) TaskEditorDialog(store = store, onDismiss = { showAdd = false })
 }
 
 @Composable
@@ -181,19 +183,4 @@ private fun FocusTimer(onComplete: () -> Unit) {
             }
         }
     }
-}
-
-@Composable
-fun AddTaskDialog(title: String = "Новая задача", onDismiss: () -> Unit, onSave: (String) -> Unit) {
-    var text by remember { mutableStateOf("") }
-    AlertDialog(
-        shape = LocalStyleTokens.current.heroShape,
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = LocalStyleTokens.current.heroElevation,
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = { OutlinedTextField(value = text, onValueChange = { text = it }, label = { Text("Что нужно сделать?") }, singleLine = true) },
-        confirmButton = { TextButton(onClick = { if (text.isNotBlank()) onSave(text) }) { Text("Добавить") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } }
-    )
 }
