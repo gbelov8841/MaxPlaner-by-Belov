@@ -163,12 +163,16 @@ internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit) {
     }
     val visible = if (query.isNotBlank()) ActionCatalog.templates.filter { it.title.contains(query.trim(), ignoreCase = true) }
         else category?.let { c -> ActionCatalog.templates.filter { it.category == c } } ?: ActionCatalog.popular
+    val tokens = LocalStyleTokens.current
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = tokens.heroShape,
+        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = if (tokens.floatingGlass) .90f else 1f),
+        tonalElevation = tokens.heroElevation,
         title = { Text(category?.title?.let(::categoryLabel) ?: "Популярное") },
         text = {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                item { OutlinedTextField(query, { query = it }, label = { Text("Найти действие") }, singleLine = true, modifier = Modifier.fillMaxWidth()) }
+                item { OutlinedTextField(query, { query = it }, label = { Text("Найти действие") }, singleLine = true, shape = tokens.compactShape, modifier = Modifier.fillMaxWidth()) }
                 item {
                     TextButton(onClick = { showCategories = !showCategories }) { Text(if (showCategories) "Скрыть категории" else "Все категории · 11", maxLines = 1) }
                     AnimatedVisibility(
@@ -231,11 +235,11 @@ internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit) {
 @Composable
 private fun CategoryRow(icon: ImageVector, title: String, subtitle: String, selected: Boolean, onClick: () -> Unit) {
     val scale by animateFloatAsState(if (selected) 1.015f else 1f, tween(180), label = "categoryScale")
-    Surface(
+    com.belov.maxplaner.ui.components.PlannerSurface(
         modifier = Modifier.fillMaxWidth().graphicsLayer { scaleX = scale; scaleY = scale }.clickable(onClick = onClick),
-        shape = RoundedCornerShape(18.dp),
-        color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-        tonalElevation = if (selected) 2.dp else 0.dp
+        shape = LocalStyleTokens.current.compactShape,
+        color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = .13f) else MaterialTheme.colorScheme.surfaceVariant,
+        selected = selected
     ) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(icon, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
