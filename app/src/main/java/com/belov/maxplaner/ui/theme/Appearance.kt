@@ -26,7 +26,7 @@ data class AppStyleOption(
 val MaxPlanerStyles = listOf(
     AppStyleOption(
         id = "executive_glass",
-        name = "Executive Glass",
+        name = "Floating Glass",
         subtitle = "Премиальная глубина и стеклянные акценты",
         palettes = listOf(
             PaletteOption("prime_navy_gold", "Prime Navy Gold", Color(0xFFE8C56A), Color(0xFF07111C), Color(0xFF0F1B29), Color(0xFF6AD7A0), true),
