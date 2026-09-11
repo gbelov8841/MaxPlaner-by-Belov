@@ -30,6 +30,7 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Circle
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
@@ -208,7 +209,7 @@ private fun HabitScheduleCard(store: PlannerStore, habit: Habit, onEdit: () -> U
                 color = MaterialTheme.colorScheme.surface
             ) {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("🕒")
+                    Icon(Icons.Rounded.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.width(8.dp))
                     Text(habit.startMinutes?.let { timeRange(it, habit.durationMinutes) } ?: "Назначить время", modifier = Modifier.weight(1f), fontWeight = FontWeight.Medium)
                     Text("Изменить", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
@@ -255,11 +256,12 @@ private fun HabitScheduleDialog(
     var type by remember { mutableStateOf(initialSchedule.type) }
     var selectedDays by remember { mutableStateOf(initialSchedule.weekdays) }
     val valid = (slotStart == null || parsedDuration != null && parsedDuration in 15..720) && name.isNotBlank() && (type == HabitScheduleType.DAILY || selectedDays.isNotEmpty())
+    val tokens = LocalStyleTokens.current
 
     AlertDialog(
-        shape = LocalStyleTokens.current.heroShape,
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = LocalStyleTokens.current.heroElevation,
+        shape = tokens.heroShape,
+        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = if (tokens.floatingGlass) .90f else 1f),
+        tonalElevation = tokens.heroElevation,
         onDismissRequest = onDismiss,
         title = { Text(if (allowName) title else "Расписание · $title") },
         text = {
@@ -271,7 +273,8 @@ private fun HabitScheduleDialog(
                         label = { Text("Название") },
                         placeholder = { Text("Например: прогулка 30 минут") },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = tokens.compactShape
                     )
                 }
 
@@ -299,7 +302,7 @@ private fun HabitScheduleDialog(
                                 modifier = Modifier.weight(1f).heightIn(min = 44.dp).clickable {
                                     selectedDays = if (selected) selectedDays - day else selectedDays + day
                                 },
-                                shape = LocalStyleTokens.current.pillShape,
+                                shape = tokens.pillShape,
                                 selected = selected,
                                 color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
                             ) {
