@@ -2,6 +2,7 @@ package com.belov.maxplaner.ui.screens
 
 import com.belov.maxplaner.ui.icons.PrimeIcons
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 
 import com.belov.maxplaner.ui.components.TimeSlotFields
 import com.belov.maxplaner.ui.components.EditTimeSlotDialog
@@ -199,8 +200,8 @@ private fun HabitScheduleCard(store: PlannerStore, habit: Habit, onEdit: () -> U
                     Text(habit.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                     Text(scheduleLabel(habit.schedule), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                IconButton(onClick = onEdit) { Icon(Icons.Rounded.Edit, "Изменить расписание") }
-                IconButton(onClick = { store.deleteHabit(habit.id) }) { Icon(Icons.Rounded.Delete, "Удалить") }
+                IconButton(onClick = onEdit, modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)) { Icon(Icons.Rounded.Edit, "Изменить расписание") }
+                IconButton(onClick = { store.deleteHabit(habit.id) }, modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)) { Icon(Icons.Rounded.Delete, "Удалить") }
             }
 
             PlannerSurface(
