@@ -121,7 +121,7 @@ fun TasksV2Screen(store: PlannerStore) {
         }
         val sorted = store.tasks.sortedWith(compareBy({ it.completed }, { -it.priority }))
         items(sorted, key = { it.id }) { task ->
-            PlannerCard(modifier = Modifier.fillMaxWidth().clickable { selectedTaskId = task.id }) {
+            PlannerCard(modifier = Modifier.fillMaxWidth(), onClick = { selectedTaskId = task.id }) {
                 Row(
                     Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding),
                     verticalAlignment = Alignment.CenterVertically
@@ -212,7 +212,7 @@ internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit) {
                 item { OutlinedButton(onClick = { custom = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), shape = LocalStyleTokens.current.pillShape) { Icon(Icons.Rounded.Edit, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Создать своё", maxLines = 1) } }
                 if (visible.isEmpty()) item { Text("Ничего не найдено. Можно создать своё действие.") }
                 items(visible, key = { it.title }) { action ->
-                    PlannerCard(modifier = Modifier.fillMaxWidth().clickable { selectedTitle = action.title }) {
+                    PlannerCard(modifier = Modifier.fillMaxWidth(), onClick = { selectedTitle = action.title }) {
                         Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                             Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
                                 Icon(categoryMeta(action.category).first, null, modifier = Modifier.padding(10.dp).size(24.dp), tint = MaterialTheme.colorScheme.primary)
