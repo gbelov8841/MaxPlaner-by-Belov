@@ -206,8 +206,9 @@ private fun HabitScheduleCard(store: PlannerStore, habit: Habit, onEdit: () -> U
             }
 
             PlannerSurface(
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable { editTime = true },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                 shape = LocalStyleTokens.current.compactShape,
+                onClick = { editTime = true },
                 color = MaterialTheme.colorScheme.surface
             ) {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -301,10 +302,9 @@ private fun HabitScheduleDialog(
                         habitDays.forEach { (day, label) ->
                             val selected = day in selectedDays
                             PlannerSurface(
-                                modifier = Modifier.weight(1f).heightIn(min = 44.dp).clickable {
-                                    selectedDays = if (selected) selectedDays - day else selectedDays + day
-                                },
+                                modifier = Modifier.weight(1f).heightIn(min = 48.dp),
                                 shape = tokens.pillShape,
+                                onClick = { selectedDays = if (selected) selectedDays - day else selectedDays + day },
                                 selected = selected,
                                 color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
                             ) {
