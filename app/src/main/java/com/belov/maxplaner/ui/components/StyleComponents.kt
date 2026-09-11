@@ -4,8 +4,10 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Card
@@ -19,6 +21,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -27,15 +31,59 @@ import com.belov.maxplaner.ui.theme.LocalStyleTokens
 @Composable
 fun styleBorder(selected: Boolean = false): BorderStroke {
     val tokens = LocalStyleTokens.current
+    val width = if (selected) tokens.selectedBorderWidth else tokens.borderWidth
+    if (tokens.floatingGlass && !selected) {
+        return BorderStroke(
+            width,
+            Brush.linearGradient(
+                listOf(
+                    Color.White.copy(alpha = .22f),
+                    MaterialTheme.colorScheme.primary.copy(alpha = .18f),
+                    Color.White.copy(alpha = .06f)
+                )
+            )
+        )
+    }
     val color = if (selected || tokens.accentBorders) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.outlineVariant
-    return BorderStroke(
-        if (selected) tokens.selectedBorderWidth else tokens.borderWidth,
-        color.copy(alpha = if (selected) 1f else tokens.borderAlpha)
+    return BorderStroke(width, color.copy(alpha = if (selected) 1f else tokens.borderAlpha))
+}
+
+/**
+ * Floating Glass uses translucent layered surfaces and light gradients.
+ * This deliberately does not claim backdrop blur: Compose is only drawing transparent layers here.
+ */
+@Composable
+fun PlannerBackdrop(modifier: Modifier = Modifier) {
+    val tokens = LocalStyleTokens.current
+    val primary = MaterialTheme.colorScheme.primary
+    val secondary = MaterialTheme.colorScheme.secondary
+    Box(
+        modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .drawBehind {
+                if (tokens.floatingGlass) {
+                    val radius = maxOf(size.width, size.height) * .72f
+                    drawRect(
+                        brush = Brush.radialGradient(
+                            colors = listOf(primary.copy(alpha = .11f), Color.Transparent),
+                            center = Offset(size.width * .12f, size.height * .06f),
+                            radius = radius
+                        )
+                    )
+                    drawRect(
+                        brush = Brush.radialGradient(
+                            colors = listOf(secondary.copy(alpha = .07f), Color.Transparent),
+                            center = Offset(size.width * .90f, size.height * .72f),
+                            radius = radius * .82f
+                        )
+                    )
+                }
+            }
     )
 }
 
-/** Shared surfaces keep every screen responsive to the selected style. No blur passes. */
 @Composable
 fun PlannerCard(
     modifier: Modifier = Modifier,
@@ -46,19 +94,37 @@ fun PlannerCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val tokens = LocalStyleTokens.current
+    val resolvedColors = if (tokens.floatingGlass) {
+        CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface.copy(
+                alpha = if (hero) (tokens.surfaceOpacity + .08f).coerceAtMost(.92f) else tokens.surfaceOpacity
+            )
+        )
+    } else colors
+
     Card(
         modifier = modifier,
         shape = shape,
-        colors = colors,
+        colors = resolvedColors,
         border = styleBorder(selected),
         elevation = CardDefaults.cardElevation(defaultElevation = if (hero) tokens.heroElevation else tokens.cardElevation)
     ) {
-        if (hero && tokens.heroHighlightAlpha > 0f) {
+        val highlight = when {
+            hero && tokens.heroHighlightAlpha > 0f -> tokens.heroHighlightAlpha
+            tokens.floatingGlass -> .035f
+            else -> 0f
+        }
+        if (highlight > 0f) {
             Column(
-                Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(
-                    MaterialTheme.colorScheme.primary.copy(alpha = tokens.heroHighlightAlpha),
-                    Color.Transparent
-                ))),
+                Modifier.fillMaxWidth().background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color.White.copy(alpha = if (tokens.floatingGlass) .055f else 0f),
+                            MaterialTheme.colorScheme.primary.copy(alpha = highlight),
+                            Color.Transparent
+                        )
+                    )
+                ),
                 content = content
             )
         } else content()
@@ -73,12 +139,15 @@ fun PlannerSurface(
     selected: Boolean = false,
     content: @Composable () -> Unit
 ) {
+    val tokens = LocalStyleTokens.current
+    val resolved = if (tokens.floatingGlass) color.copy(alpha = tokens.surfaceOpacity) else color
     Surface(
         modifier = modifier,
         shape = shape,
-        color = color,
+        color = resolved,
         contentColor = contentColorFor(color),
         border = styleBorder(selected),
+        tonalElevation = if (tokens.floatingGlass) tokens.cardElevation else androidx.compose.ui.unit.Dp.Unspecified,
         content = content
     )
 }
@@ -95,7 +164,7 @@ fun PlannerProgressIndicator(progress: () -> Float, modifier: Modifier = Modifie
         progress = { animated },
         modifier = modifier.height(tokens.progressHeight).clip(tokens.progressShape),
         color = MaterialTheme.colorScheme.primary,
-        trackColor = MaterialTheme.colorScheme.outlineVariant,
+        trackColor = if (tokens.floatingGlass) Color.White.copy(alpha = .10f) else MaterialTheme.colorScheme.outlineVariant,
         gapSize = tokens.progressHeight / 2,
         drawStopIndicator = {}
     )
