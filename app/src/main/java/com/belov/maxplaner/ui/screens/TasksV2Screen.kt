@@ -50,6 +50,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextDecoration
@@ -92,11 +93,11 @@ fun TasksV2Screen(store: PlannerStore) {
                 Text("Выбери готовое действие или добавь своё", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Button(onClick = { showCatalog = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
                     Icon(Icons.Rounded.AutoAwesome, contentDescription = null)
-                    Text("Выбрать готовое", modifier = Modifier.padding(start = 8.dp), maxLines = 1)
+                    Text("Выбрать готовое", modifier = Modifier.padding(start = 8.dp))
                 }
                 OutlinedButton(onClick = { showCustom = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
                     Icon(Icons.Rounded.Edit, contentDescription = null)
-                    Text("Создать своё", modifier = Modifier.padding(start = 8.dp), maxLines = 1)
+                    Text("Создать своё", modifier = Modifier.padding(start = 8.dp))
                 }
             }
         }
@@ -125,7 +126,7 @@ fun TasksV2Screen(store: PlannerStore) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     CompletionButton(task.completed, task.title) { store.toggleTask(task.id) }
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Column(Modifier.weight(1f).padding(vertical = if (LocalDensity.current.fontScale > 1.2f) 4.dp else 0.dp), verticalArrangement = Arrangement.spacedBy(if (LocalDensity.current.fontScale > 1.2f) 6.dp else 3.dp)) {
                         Text(
                             task.title,
                             fontWeight = FontWeight.SemiBold,
@@ -137,7 +138,7 @@ fun TasksV2Screen(store: PlannerStore) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    IconButton(onClick = { store.deleteTask(task.id) }) {
+                    IconButton(onClick = { store.deleteTask(task.id) }, modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)) {
                         Icon(Icons.Rounded.Delete, contentDescription = "Удалить")
                     }
                 }
