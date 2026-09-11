@@ -201,8 +201,8 @@ fun CalendarScreen(store: PlannerStore) {
         FloatingActionButton(
             onClick = { showAdd = true },
             modifier = Modifier.align(Alignment.BottomEnd).padding(LocalStyleTokens.current.cardPadding),
-            containerColor = Color(0xFFE8C56A),
-            contentColor = Color(0xFF0B1118)
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
         ) { Icon(Icons.Rounded.Add, contentDescription = "Добавить") }
     }
 
@@ -538,7 +538,7 @@ private fun SimpleNameDialog(title: String, hint: String, onDismiss: () -> Unit,
         tonalElevation = LocalStyleTokens.current.heroElevation,
         onDismissRequest = onDismiss,
         title = { Text(title) },
-        text = { OutlinedTextField(text, { text = it }, label = { Text(hint) }, singleLine = true) },
+        text = { OutlinedTextField(text, { text = it }, label = { Text(hint) }, singleLine = true, shape = LocalStyleTokens.current.compactShape) },
         confirmButton = { TextButton(onClick = { if (text.isNotBlank()) onSave(text) }) { Text("Сохранить") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } }
     )
