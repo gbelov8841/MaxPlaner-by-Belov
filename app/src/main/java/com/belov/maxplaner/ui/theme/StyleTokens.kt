@@ -24,7 +24,9 @@ data class StyleTokens(
     val sectionSpacing: Dp,
     val progressHeight: Dp,
     val motionDurationMillis: Int,
-    val navigationElevation: Dp
+    val navigationElevation: Dp,
+    val floatingGlass: Boolean,
+    val surfaceOpacity: Float
 ) {
     val heroShape: Shape get() = shapes.extraLarge
     val cardShape: Shape get() = shapes.large
@@ -52,7 +54,9 @@ fun styleTokensFor(styleId: String): StyleTokens {
             sectionSpacing = 10.dp,
             progressHeight = 3.dp,
             motionDurationMillis = 140,
-            navigationElevation = 0.dp
+            navigationElevation = 0.dp,
+            floatingGlass = false,
+            surfaceOpacity = 1f
         )
         "luxe_dark" -> StyleTokens(
             shapes = shapes,
@@ -68,7 +72,9 @@ fun styleTokensFor(styleId: String): StyleTokens {
             sectionSpacing = 14.dp,
             progressHeight = 5.dp,
             motionDurationMillis = 240,
-            navigationElevation = 3.dp
+            navigationElevation = 3.dp,
+            floatingGlass = false,
+            surfaceOpacity = 1f
         )
         "midnight_neon" -> StyleTokens(
             shapes = shapes,
@@ -84,7 +90,9 @@ fun styleTokensFor(styleId: String): StyleTokens {
             sectionSpacing = 12.dp,
             progressHeight = 4.dp,
             motionDurationMillis = 170,
-            navigationElevation = 0.dp
+            navigationElevation = 0.dp,
+            floatingGlass = false,
+            surfaceOpacity = 1f
         )
         "rose_premium" -> StyleTokens(
             shapes = shapes,
@@ -100,7 +108,9 @@ fun styleTokensFor(styleId: String): StyleTokens {
             sectionSpacing = 18.dp,
             progressHeight = 8.dp,
             motionDurationMillis = 280,
-            navigationElevation = 1.dp
+            navigationElevation = 1.dp,
+            floatingGlass = false,
+            surfaceOpacity = 1f
         )
         "pure_white" -> StyleTokens(
             shapes = shapes,
@@ -116,7 +126,9 @@ fun styleTokensFor(styleId: String): StyleTokens {
             sectionSpacing = 18.dp,
             progressHeight = 2.dp,
             motionDurationMillis = 140,
-            navigationElevation = 0.dp
+            navigationElevation = 0.dp,
+            floatingGlass = false,
+            surfaceOpacity = 1f
         )
         else -> StyleTokens(
             shapes = shapes,
@@ -132,7 +144,9 @@ fun styleTokensFor(styleId: String): StyleTokens {
             sectionSpacing = 14.dp,
             progressHeight = 6.dp,
             motionDurationMillis = 220,
-            navigationElevation = 2.dp
+            navigationElevation = 6.dp,
+            floatingGlass = true,
+            surfaceOpacity = .74f
         )
     }
 }
