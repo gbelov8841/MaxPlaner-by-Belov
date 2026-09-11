@@ -158,6 +158,7 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
         PlannerBackdrop()
         Scaffold(
             containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onBackground,
             bottomBar = {
                 if (tokens.floatingGlass) {
                     Surface(
