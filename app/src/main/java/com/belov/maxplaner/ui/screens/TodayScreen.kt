@@ -296,15 +296,16 @@ private fun WeekStrip(today: java.time.LocalDate) {
         repeat(7) { offset ->
             val date = start.plusDays(offset.toLong())
             val selected = date == today
-            Surface(
-                shape = RoundedCornerShape(18.dp),
-                color = if (selected) Color(0xFF1E3B31) else Color(0xFF0E1A27),
+            PlannerSurface(
+                shape = LocalStyleTokens.current.pillShape,
+                color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = .16f) else MaterialTheme.colorScheme.surface,
+                selected = selected,
                 modifier = Modifier.width(44.dp)
             ) {
                 Column(Modifier.padding(vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(date.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, Locale("ru")).take(2).uppercase(), style = MaterialTheme.typography.labelSmall, color = if (selected) Color(0xFF78E6A8) else MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(date.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, Locale("ru")).take(2).uppercase(), style = MaterialTheme.typography.labelSmall, color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(2.dp))
-                    Text(date.dayOfMonth.toString(), fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium, color = if (selected) Color(0xFFF1F5F3) else MaterialTheme.colorScheme.onSurface)
+                    Text(date.dayOfMonth.toString(), fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
                 }
             }
         }
