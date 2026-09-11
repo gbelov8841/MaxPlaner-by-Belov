@@ -14,6 +14,7 @@ import com.belov.maxplaner.data.*
 import java.time.*
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import com.belov.maxplaner.ui.theme.LocalStyleTokens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +49,9 @@ fun ActionSetupDialog(store: PlannerStore, onDismiss: () -> Unit, template: Acti
     val periodOptions = listOf("Сегодня", "На дату", "На неделю", "Повторять", "По дням недели")
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = tokens.heroShape,
+        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = if (tokens.floatingGlass) .90f else 1f),
+        tonalElevation = tokens.heroElevation,
         title = { Text(if (template == null) "Своё действие" else "Добавить в план") },
         text = {
             Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
