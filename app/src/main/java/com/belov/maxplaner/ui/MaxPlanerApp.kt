@@ -199,7 +199,14 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
                 popEnterTransition = { EnterTransition.None },
                 popExitTransition = { ExitTransition.None }
             ) {
-                composable("today") { TodayScreen(store) }
+                composable("today") {
+                    TodayScreen(
+                        store = store,
+                        onOpenPlan = { navController.navigate("calendar") { launchSingleTop = true } },
+                        onOpenProgress = { navController.navigate("analytics") { launchSingleTop = true } },
+                        onOpenHabits = { navController.navigate("habits") { launchSingleTop = true } }
+                    )
+                }
                 composable("calendar") { CalendarScreen(store) }
                 composable("tasks") { TasksV2Screen(store) }
                 composable("habits") { HabitsV2Screen(store) }
