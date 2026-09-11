@@ -1,6 +1,7 @@
 package com.belov.maxplaner.ui.screens
 
 import com.belov.maxplaner.data.categoryLabel
+import com.belov.maxplaner.data.ActionCategory
 
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.belov.maxplaner.ui.components.ActionSetupDialog
@@ -39,10 +40,16 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @Composable
-fun TodayScreen(store: PlannerStore) {
+fun TodayScreen(
+    store: PlannerStore,
+    onOpenPlan: () -> Unit = {},
+    onOpenProgress: () -> Unit = {},
+    onOpenHabits: () -> Unit = {}
+) {
     var selectedTaskId by rememberSaveable { mutableStateOf<String?>(null) }
     var showAdd by rememberSaveable { mutableStateOf(false) }
     var showCatalog by rememberSaveable { mutableStateOf(false) }
+    var catalogCategory by rememberSaveable { mutableStateOf<ActionCategory?>(null) }
     val selectedTask = store.tasks.firstOrNull { it.id == selectedTaskId }
     if (selectedTask != null) {
         TaskDetailScreen(store, selectedTask) { selectedTaskId = null }
@@ -80,9 +87,6 @@ fun TodayScreen(store: PlannerStore) {
                         Text("PrimePlaner", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                         Text("by Belov", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Surface(shape = tokens.compactShape, color = MaterialTheme.colorScheme.surfaceVariant) {
-                        Icon(Icons.Rounded.NotificationsNone, contentDescription = "Уведомления", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(10.dp).size(22.dp))
-                    }
                 }
                 Spacer(Modifier.height(4.dp))
                 Text(greeting, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
@@ -94,10 +98,10 @@ fun TodayScreen(store: PlannerStore) {
             }
         }
         item {
-            WeekStrip(store.today)
+            WeekStrip(store.today, onOpenPlan)
         }
         item {
-            PlannerCard(hero = true) {
+            PlannerCard(hero = true, onClick = onOpenProgress) {
                 Row(
                     Modifier.fillMaxWidth().padding(tokens.cardPadding),
                     verticalAlignment = Alignment.CenterVertically,
@@ -182,14 +186,14 @@ fun TodayScreen(store: PlannerStore) {
                 }
             }
         }
-        item { PrimeCategoryGrid() }
+        item { PrimeCategoryGrid { category -> catalogCategory = category; showCatalog = true } }
         if (total > 0) {
             item { SectionTitle("Сегодня по плану") }
             items(remainingTasks, key = { "task-${it.id}" }) { task ->
                 TodayTaskRow(store, task, false) { selectedTaskId = task.id }
             }
             items(habits, key = { "habit-${it.id}" }) { habit ->
-                PlannerCard(modifier = Modifier.fillMaxWidth(), shape = tokens.compactShape) {
+                PlannerCard(modifier = Modifier.fillMaxWidth(), shape = tokens.compactShape, onClick = onOpenHabits) {
                     Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 13.dp), verticalAlignment = Alignment.CenterVertically) {
                         CompletionButton(today in habit.completedDates, habit.title) { store.toggleHabitToday(habit.id) }
                         Column(Modifier.weight(1f)) {
@@ -210,7 +214,7 @@ fun TodayScreen(store: PlannerStore) {
         }
         if (total > 0 || store.focusMinutes > 0) {
             item {
-                PlannerCard(modifier = Modifier.fillMaxWidth()) {
+                PlannerCard(modifier = Modifier.fillMaxWidth(), onClick = onOpenProgress) {
                     Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Итог дня", style = MaterialTheme.typography.titleMedium)
                         if (total > 0) Text("Выполнено $done из $total")
@@ -224,7 +228,7 @@ fun TodayScreen(store: PlannerStore) {
         }
     }
     if (showAdd) ActionSetupDialog(store, onDismiss = { showAdd = false })
-    if (showCatalog) ActionCatalogDialog(store, onDismiss = { showCatalog = false })
+    if (showCatalog) ActionCatalogDialog(store, onDismiss = { showCatalog = false; catalogCategory = null }, initialCategory = catalogCategory)
 }
 
 @Composable
@@ -239,7 +243,7 @@ private fun SectionTitle(title: String) {
 
 @Composable
 private fun TodayTaskRow(store: PlannerStore, task: com.belov.maxplaner.data.PlannerTask, prominent: Boolean, onOpen: () -> Unit) {
-    PlannerCard(modifier = Modifier.fillMaxWidth().clickable(onClick = onOpen), shape = LocalStyleTokens.current.compactShape,
+    PlannerCard(modifier = Modifier.fillMaxWidth(), onClick = onOpen, shape = LocalStyleTokens.current.compactShape,
         colors = CardDefaults.cardColors(containerColor = if (prominent) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface)) {
         Row(Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
             CompletionButton(task.completed, task.title) { store.toggleTask(task.id) }
@@ -297,7 +301,7 @@ private fun FocusTimer(store: PlannerStore) {
 }
 
 @Composable
-private fun WeekStrip(today: java.time.LocalDate) {
+private fun WeekStrip(today: java.time.LocalDate, onOpenPlan: () -> Unit) {
     val start = today.minusDays(3)
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         repeat(7) { offset ->
@@ -307,6 +311,7 @@ private fun WeekStrip(today: java.time.LocalDate) {
                 shape = LocalStyleTokens.current.pillShape,
                 color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = .16f) else MaterialTheme.colorScheme.surface,
                 selected = selected,
+                onClick = onOpenPlan,
                 modifier = Modifier.width(44.dp)
             ) {
                 Column(Modifier.padding(vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -320,22 +325,23 @@ private fun WeekStrip(today: java.time.LocalDate) {
 }
 
 @Composable
-private fun PrimeCategoryGrid() {
+private fun PrimeCategoryGrid(onCategoryClick: (ActionCategory) -> Unit) {
     val categories = listOf(
-        Triple("Здоровье", Icons.Rounded.Favorite, Color(0xFF52D98B)),
-        Triple("Спорт", Icons.Rounded.FitnessCenter, Color(0xFF5CA8FF)),
-        Triple("Развитие", Icons.Rounded.Psychology, Color(0xFFB98AFF)),
-        Triple("Работа", Icons.Rounded.Work, Color(0xFFFFB45C)),
-        Triple("Общение", Icons.Rounded.Groups, Color(0xFFFF7FA8)),
-        Triple("Финансы", Icons.Rounded.AccountBalanceWallet, Color(0xFFE8C56A))
+        Triple(ActionCategory.HEALTH, Icons.Rounded.Favorite, Color(0xFF52D98B)),
+        Triple(ActionCategory.SPORT, Icons.Rounded.FitnessCenter, Color(0xFF5CA8FF)),
+        Triple(ActionCategory.DEVELOPMENT, Icons.Rounded.Psychology, Color(0xFFB98AFF)),
+        Triple(ActionCategory.PRODUCTIVITY, Icons.Rounded.Work, Color(0xFFFFB45C)),
+        Triple(ActionCategory.RELATIONSHIPS, Icons.Rounded.Groups, Color(0xFFFF7FA8)),
+        Triple(ActionCategory.FINANCE, Icons.Rounded.AccountBalanceWallet, Color(0xFFE8C56A))
     )
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         SectionTitle("Категории")
         categories.chunked(3).forEach { row ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                row.forEach { (title, icon, tint) ->
-                    Surface(
+                row.forEach { (category, icon, tint) ->
+                    PlannerSurface(
                         modifier = Modifier.weight(1f).heightIn(min = 108.dp),
+                        onClick = { onCategoryClick(category) },
                         shape = LocalStyleTokens.current.cardShape,
                         color = MaterialTheme.colorScheme.surface,
                         tonalElevation = 1.dp
@@ -344,7 +350,7 @@ private fun PrimeCategoryGrid() {
                             Surface(shape = LocalStyleTokens.current.compactShape, color = tint.copy(alpha = .14f)) {
                                 Icon(icon, null, tint = tint, modifier = Modifier.padding(10.dp).size(26.dp))
                             }
-                            Text(title, style = MaterialTheme.typography.labelMedium, maxLines = 1)
+                            Text(category.title.substringAfter(" "), style = MaterialTheme.typography.labelMedium, maxLines = 1)
                         }
                     }
                 }
