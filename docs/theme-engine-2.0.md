@@ -1,6 +1,6 @@
 # PrimePlaner by Belov — Theme Engine 2.0
 
-Status: architecture and token proposal, pending visual review and device validation.
+Status: Home and Day Plan mockups for all five themes approved by owner. Implementation in progress; device validation pending.
 Source: owner's Theme Collection 2.0 reference and brief, 2026-09-11.
 Existing Android application and package `com.belov.maxplaner` must remain intact.
 

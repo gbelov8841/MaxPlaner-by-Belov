@@ -1,186 +1,101 @@
 package com.belov.maxplaner.ui.screens
 
-import com.belov.maxplaner.ui.theme.LocalStyleTokens
-import com.belov.maxplaner.ui.components.PlannerCard
-import com.belov.maxplaner.ui.components.PlannerSurface
-import com.belov.maxplaner.ui.components.PlannerProgressIndicator
-
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.TextButton
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.rounded.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.dp
-import com.belov.maxplaner.ui.theme.AppearanceStore
-import com.belov.maxplaner.ui.theme.MaxPlanerStyles
-import com.belov.maxplaner.ui.theme.PaletteOption
+import com.belov.maxplaner.ui.components.*
+import com.belov.maxplaner.ui.theme.*
 
 @Composable
-fun AppearanceScreen(appearance: AppearanceStore, onOpenTasks: () -> Unit = {}, onOpenHabits: () -> Unit = {}) {
-    LazyColumn(
-        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp)
-    ) {
+fun AppearanceScreen(appearance: AppearanceStore) {
+    LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
-            Text("Ещё", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold)
-            TextButton(onClick = onOpenTasks, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("Все мои дела и показатели") }
-            TextButton(onClick = onOpenHabits, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("Мои привычки") }
+            Text("Оформление", style = MaterialTheme.typography.headlineLarge)
+            Text("Theme Collection 2.0", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        item {
-            Text("Оформление", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold)
-            Text(
-                "Стиль меняет характер интерфейса, цветовая схема — его настроение.",
-                modifier = Modifier.padding(top = 4.dp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        item { CurrentStylePreview(appearance) }
-
-        item {
-            Text("Стиль", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-            Spacer(Modifier.height(10.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                MaxPlanerStyles.forEachIndexed { index, style ->
-                    val selected = appearance.styleId == style.id
-                    PlannerCard(
-                        modifier = Modifier.fillMaxWidth().clickable { appearance.selectStyle(style.id) },
-                        selected = selected,
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
-                        ),
-                        shape = LocalStyleTokens.current.cardShape
-                    ) {
-                        Row(
-                            Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(Modifier.weight(1f)) {
-                                Text("${index + 1}. ${style.name}", fontWeight = FontWeight.SemiBold)
-                                Text(style.subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        items(ThemePacks, key = { it.id }) { pack ->
+            val selected = appearance.themeId == pack.id
+            Card(onClick = { appearance.selectTheme(pack.id) }, modifier = Modifier.fillMaxWidth().semantics { this.selected = selected },
+                shape = LocalStyleTokens.current.cardShape, border = if (selected) androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null) {
+                Box(Modifier.fillMaxWidth().heightIn(min = 150.dp)) {
+                    Image(painterResource(pack.artwork.resource), null, Modifier.matchParentSize(), contentScale = ContentScale.Crop, alignment = Alignment.TopCenter)
+                    Box(Modifier.matchParentSize().background(Brush.verticalGradient(listOf(pack.background.copy(alpha = .2f), pack.background.copy(alpha = .92f)))))
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(pack.name, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, color = pack.text)
+                            if (selected) Icon(Icons.Rounded.CheckCircle, "Выбрана", tint = pack.accent)
+                        }
+                        Text(pack.description, style = MaterialTheme.typography.bodySmall, color = pack.text)
+                        Surface(color = pack.surfaces.color.copy(alpha = pack.surfaces.opacity), contentColor = pack.text,
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(pack.surfaces.compactRadius)) {
+                            Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Rounded.RadioButtonUnchecked, null, tint = pack.accent, modifier = Modifier.size(20.dp))
+                                Text("Пример задачи", Modifier.weight(1f).padding(start = 10.dp), style = MaterialTheme.typography.bodyMedium)
+                                Text("09:00", style = MaterialTheme.typography.labelSmall, color = pack.secondaryText)
                             }
-                            if (selected) Icon(Icons.Rounded.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }
             }
         }
+        item { Text("Тема применяется ко всем экранам и сохраняется на устройстве.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+    }
+}
 
+@Composable
+fun MoreScreen(onNavigate: (String) -> Unit) {
+    val sections = listOf(Triple("habits", "Привычки", Icons.Rounded.Spa), Triple("tasks", "Дела и каталог действий", Icons.Rounded.GridView),
+        Triple("appearance", "Оформление", Icons.Rounded.Palette), Triple("settings", "Настройки", Icons.Rounded.Settings))
+    LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item { Text("Ещё", style = MaterialTheme.typography.headlineLarge) }
+        items(sections) { (route, title, icon) ->
+            PlannerSurface(modifier = Modifier.fillMaxWidth(), onClick = { onNavigate(route) }) {
+                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(icon, null, Modifier.size(22.dp)); Text(title, Modifier.weight(1f).padding(horizontal = 12.dp))
+                    Icon(Icons.Rounded.ChevronRight, null, Modifier.size(18.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SettingsScreen(appearance: AppearanceStore) {
+    var name by rememberSaveable { mutableStateOf(appearance.displayName) }
+    var saved by rememberSaveable { mutableStateOf(false) }
+    LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item { Text("Настройки", style = MaterialTheme.typography.headlineLarge) }
         item {
-            Text("Цветовая схема", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-            Text(
-                appearance.style.name,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 2.dp, bottom = 10.dp)
-            )
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(appearance.style.palettes, key = { it.id }) { palette ->
-                    PaletteCard(
-                        palette = palette,
-                        selected = appearance.paletteId == palette.id,
-                        onClick = { appearance.selectPalette(palette.id) }
-                    )
+            PlannerCard(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Как к тебе обращаться", style = MaterialTheme.typography.titleMedium)
+                    OutlinedTextField(name, { name = it.take(60); saved = false }, label = { Text("Имя") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    Button(onClick = { appearance.rename(name); saved = true }, enabled = name.trim() != appearance.displayName) { Text("Сохранить") }
+                    if (saved) Text("Имя сохранено", style = MaterialTheme.typography.bodySmall)
                 }
             }
         }
-
         item {
-            Text(
-                "Выбор сохраняется на этом устройстве и применяется ко всем экранам PrimePlaner.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
-private fun CurrentStylePreview(appearance: AppearanceStore) {
-    PlannerCard(
-        modifier = Modifier.fillMaxWidth(),
-        hero = true,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-    ) {
-        Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)) {
-            Text("PrimePlaner by Belov", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            Text(appearance.style.name, color = MaterialTheme.colorScheme.onPrimaryContainer)
-            if (LocalDensity.current.fontScale > 1.2f) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                PlannerSurface(shape = LocalStyleTokens.current.compactShape, color = MaterialTheme.colorScheme.primary) {
-                    Text("Сегодня", modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp), color = MaterialTheme.colorScheme.onPrimary)
-                }
-                PlannerSurface(shape = LocalStyleTokens.current.compactShape, color = MaterialTheme.colorScheme.surface) {
-                    Text("6 из 8 задач", modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp))
-                }
-            } else Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                PlannerSurface(shape = LocalStyleTokens.current.compactShape, color = MaterialTheme.colorScheme.primary) {
-                    Text("Сегодня", modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp), color = MaterialTheme.colorScheme.onPrimary)
-                }
-                PlannerSurface(shape = LocalStyleTokens.current.compactShape, color = MaterialTheme.colorScheme.surface) {
-                    Text("6 из 8 задач", modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp))
+            PlannerCard(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("PrimePlaner by Belov", style = MaterialTheme.typography.titleMedium)
+                    Text("Дела, привычки и показатели хранятся на этом устройстве. Приложение работает без интернета.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            Text("${appearance.palette.name} · Пример прогресса", fontWeight = FontWeight.Medium)
-            PlannerProgressIndicator(progress = { .78f }, modifier = Modifier.fillMaxWidth())
         }
     }
-}
-
-@Composable
-private fun PaletteCard(palette: PaletteOption, selected: Boolean, onClick: () -> Unit) {
-    PlannerCard(
-        modifier = Modifier
-            .size(width = 152.dp, height = 118.dp)
-            .clickable(onClick = onClick),
-        shape = LocalStyleTokens.current.cardShape,
-        selected = selected,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                ColorDot(palette.background)
-                ColorDot(palette.primary)
-                ColorDot(palette.accent)
-            }
-            Text(palette.name, fontWeight = FontWeight.SemiBold)
-            Text(if (palette.isDark) "Тёмная" else "Светлая", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    }
-}
-
-@Composable
-private fun ColorDot(color: Color) {
-    Box(
-        Modifier
-            .size(22.dp)
-            .clip(CircleShape)
-            .background(color)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
-    )
 }

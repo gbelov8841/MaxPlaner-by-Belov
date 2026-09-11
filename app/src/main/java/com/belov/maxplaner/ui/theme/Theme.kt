@@ -1,66 +1,38 @@
 package com.belov.maxplaner.ui.theme
 
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
-import androidx.compose.ui.graphics.compositeOver
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 
-private fun darkScheme(p: PaletteOption) = darkColorScheme(
-    primary = p.primary,
-    onPrimary = Color(0xFF06110B),
-    primaryContainer = p.primary.copy(alpha = 0.22f).compositeOver(p.background),
-    onPrimaryContainer = Color(0xFFF4F6F4),
-    secondary = p.accent,
-    secondaryContainer = p.accent.copy(alpha = 0.20f).compositeOver(p.background),
-    background = p.background,
-    surface = p.surface,
-    surfaceVariant = blend(p.surface, p.primary, 0.08f),
-    onBackground = Color(0xFFF3F5F4),
-    onSurface = Color(0xFFF3F5F4),
-    onSurfaceVariant = Color(0xFFB8C0BC),
-    outline = Color(0xFF5B6460),
-    outlineVariant = Color(0xFF2B3330)
-)
-
-private fun lightScheme(p: PaletteOption) = lightColorScheme(
-    primary = p.primary,
-    onPrimary = Color.White,
-    primaryContainer = blend(p.background, p.primary, 0.13f),
-    onPrimaryContainer = Color(0xFF1A1B1C),
-    secondary = p.accent,
-    secondaryContainer = blend(p.background, p.accent, 0.18f),
-    background = p.background,
-    surface = p.surface,
-    surfaceVariant = blend(p.background, Color(0xFF7B7F84), 0.08f),
-    onBackground = Color(0xFF16181A),
-    onSurface = Color(0xFF16181A),
-    onSurfaceVariant = Color(0xFF60666B),
-    outline = Color(0xFF8A9095),
-    outlineVariant = Color(0xFFD9DEE2)
-)
-
-private fun blend(base: Color, tint: Color, amount: Float): Color = Color(
-    red = base.red * (1f - amount) + tint.red * amount,
-    green = base.green * (1f - amount) + tint.green * amount,
-    blue = base.blue * (1f - amount) + tint.blue * amount,
-    alpha = 1f
-)
+fun themeColorScheme(p: ThemePack): ColorScheme {
+    val base = if (p.dark) darkColorScheme() else lightColorScheme()
+    val inset = p.accent.copy(alpha = .10f).compositeOver(p.surfaces.modal)
+    return base.copy(
+        primary = p.accent, onPrimary = p.onAccent,
+        primaryContainer = p.accent.copy(alpha = .18f).compositeOver(p.surfaces.modal), onPrimaryContainer = p.text,
+        secondary = p.secondaryAccent, onSecondary = p.onAccent,
+        secondaryContainer = inset, onSecondaryContainer = p.text,
+        tertiary = p.secondaryAccent, onTertiary = p.onAccent, tertiaryContainer = inset, onTertiaryContainer = p.text,
+        background = p.background, onBackground = p.text,
+        surface = p.surfaces.modal, onSurface = p.text, surfaceVariant = inset, onSurfaceVariant = p.secondaryText,
+        surfaceDim = p.surfaces.modal, surfaceBright = inset, surfaceContainerLowest = p.background,
+        surfaceContainerLow = p.surfaces.modal, surfaceContainer = p.surfaces.modal,
+        surfaceContainerHigh = p.surfaces.modal, surfaceContainerHighest = inset,
+        surfaceTint = Color.Transparent, outline = p.secondaryText,
+        outlineVariant = p.surfaces.border.copy(alpha = p.surfaces.borderAlpha).compositeOver(p.surfaces.modal),
+        error = if (p.dark) Color(0xFFFFB4AB) else Color(0xFFBA1A1A),
+        onError = if (p.dark) Color(0xFF690005) else Color.White,
+        errorContainer = if (p.dark) Color(0xFF4A2425) else Color(0xFFFFDAD6),
+        onErrorContainer = if (p.dark) Color(0xFFFFDAD6) else Color(0xFF410002)
+    )
+}
 
 @Composable
 fun MaxPlanerTheme(appearance: AppearanceStore, content: @Composable () -> Unit) {
-    val palette = appearance.palette
-    val tokens = remember(appearance.styleId) { styleTokensFor(appearance.styleId) }
-    val typography = if (appearance.styleId == "executive_glass") FloatingGlassTypography else MaxPlanerTypography
-    CompositionLocalProvider(LocalStyleTokens provides tokens) {
-        MaterialTheme(
-            colorScheme = if (palette.isDark) darkScheme(palette) else lightScheme(palette),
-            typography = typography,
-            shapes = tokens.shapes,
-            content = content
-        )
+    val pack = appearance.theme
+    val tokens = remember(pack.id) { styleTokensFor(pack.id) }
+    CompositionLocalProvider(LocalThemePack provides pack, LocalStyleTokens provides tokens) {
+        MaterialTheme(colorScheme = themeColorScheme(pack), typography = themeTypography(pack), shapes = tokens.shapes, content = content)
     }
 }

@@ -3,25 +3,14 @@ package com.belov.maxplaner.ui.components
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardColors
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.contentColorFor
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -29,165 +18,89 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import com.belov.maxplaner.ui.theme.LocalStyleTokens
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import com.belov.maxplaner.ui.theme.*
 
 @Composable
 fun styleBorder(selected: Boolean = false): BorderStroke {
-    val tokens = LocalStyleTokens.current
-    val width = if (selected) tokens.selectedBorderWidth else tokens.borderWidth
-    if (tokens.floatingGlass && !selected) {
-        return BorderStroke(
-            width,
-            Brush.linearGradient(
-                listOf(
-                    Color.White.copy(alpha = .22f),
-                    MaterialTheme.colorScheme.primary.copy(alpha = .18f),
-                    Color.White.copy(alpha = .06f)
-                )
-            )
-        )
-    }
-    val color = if (selected || tokens.accentBorders) MaterialTheme.colorScheme.primary
-        else MaterialTheme.colorScheme.outlineVariant
-    return BorderStroke(width, color.copy(alpha = if (selected) 1f else tokens.borderAlpha))
+    val p = LocalThemePack.current
+    return BorderStroke(if (selected) 1.dp else .5.dp,
+        if (selected) p.accent.copy(alpha = .7f) else p.surfaces.border.copy(alpha = p.surfaces.borderAlpha))
 }
 
-/**
- * Floating Glass uses translucent layered surfaces and light gradients.
- * This deliberately does not claim backdrop blur: Compose is only drawing transparent layers here.
- */
+/** One decoded background per theme. No expensive per-card blur or bitmap layers. */
 @Composable
 fun PlannerBackdrop(modifier: Modifier = Modifier) {
-    val tokens = LocalStyleTokens.current
-    val primary = MaterialTheme.colorScheme.primary
-    val secondary = MaterialTheme.colorScheme.secondary
-    Box(
-        modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .drawBehind {
-                if (tokens.floatingGlass) {
-                    val radius = maxOf(size.width, size.height) * .72f
-                    drawRect(
-                        brush = Brush.radialGradient(
-                            colors = listOf(primary.copy(alpha = .11f), Color.Transparent),
-                            center = Offset(size.width * .12f, size.height * .06f),
-                            radius = radius
-                        )
-                    )
-                    drawRect(
-                        brush = Brush.radialGradient(
-                            colors = listOf(secondary.copy(alpha = .07f), Color.Transparent),
-                            center = Offset(size.width * .90f, size.height * .72f),
-                            radius = radius * .82f
-                        )
-                    )
-                }
-            }
-    )
+    val p = LocalThemePack.current
+    Box(modifier.fillMaxSize().background(p.background)) {
+        Image(painterResource(p.artwork.resource), contentDescription = null,
+            modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
+            alignment = BiasAlignment(p.artwork.focalX * 2 - 1, p.artwork.focalY * 2 - 1))
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
+            0f to p.background.copy(alpha = p.artwork.topScrim),
+            .48f to p.background.copy(alpha = p.artwork.middleScrim),
+            1f to p.background.copy(alpha = p.artwork.bottomScrim))))
+    }
 }
 
 @Composable
 fun PlannerCard(
-    modifier: Modifier = Modifier,
-    hero: Boolean = false,
-    selected: Boolean = false,
-    onClick: (() -> Unit)? = null,
-    enabled: Boolean = true,
-    shape: Shape = if (hero) LocalStyleTokens.current.heroShape else LocalStyleTokens.current.cardShape,
-    colors: CardColors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    content: @Composable ColumnScope.() -> Unit
+    modifier: Modifier = Modifier, hero: Boolean = false, selected: Boolean = false,
+    onClick: (() -> Unit)? = null, enabled: Boolean = true,
+    shape: Shape = LocalStyleTokens.current.cardShape,
+    colors: CardColors = CardDefaults.cardColors(), content: @Composable ColumnScope.() -> Unit
 ) {
-    val tokens = LocalStyleTokens.current
-    val resolvedColors = if (tokens.floatingGlass) {
-        CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(
-                alpha = if (hero) (tokens.surfaceOpacity + .08f).coerceAtMost(.92f) else tokens.surfaceOpacity
-            ),
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = tokens.surfaceOpacity * tokens.disabledAlpha),
-            disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = tokens.disabledAlpha)
-        )
-    } else colors
-
-    Card(
-        onClick = onClick ?: {},
-        enabled = enabled && onClick != null,
-        modifier = modifier,
-        shape = shape,
-        colors = resolvedColors,
-        border = styleBorder(selected),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (hero) tokens.heroElevation else tokens.cardElevation)
-    ) {
-        val highlight = when {
-            hero && tokens.heroHighlightAlpha > 0f -> tokens.heroHighlightAlpha
-            tokens.floatingGlass -> .035f
-            else -> 0f
-        }
-        if (highlight > 0f) {
-            Column(
-                Modifier.fillMaxWidth().background(
-                    Brush.verticalGradient(
-                        listOf(
-                            Color.White.copy(alpha = if (tokens.floatingGlass) .055f else 0f),
-                            MaterialTheme.colorScheme.primary.copy(alpha = highlight),
-                            Color.Transparent
-                        )
-                    )
-                ),
-                content = content
-            )
-        } else content()
+    val p = LocalThemePack.current
+    val interactions = remember { MutableInteractionSource() }
+    val pressed by interactions.collectIsPressedAsState()
+    val alpha = (p.surfaces.opacity + if (pressed) p.states.pressedAlpha else 0f).coerceAtMost(1f)
+    val cardColors = CardDefaults.cardColors(
+        containerColor = p.surfaces.color.copy(alpha = alpha), contentColor = p.text,
+        disabledContainerColor = p.surfaces.color.copy(alpha = alpha),
+        disabledContentColor = p.text.copy(alpha = p.states.disabledAlpha))
+    val elevation = CardDefaults.cardElevation(defaultElevation = p.surfaces.elevation)
+    if (onClick == null) {
+        Card(modifier = modifier, shape = shape, colors = cardColors, border = styleBorder(selected), elevation = elevation, content = content)
+    } else {
+        Card(onClick = onClick, enabled = enabled, modifier = modifier, shape = shape,
+            colors = cardColors, border = styleBorder(selected), elevation = elevation,
+            interactionSource = interactions, content = content)
     }
 }
 
 @Composable
 fun PlannerSurface(
-    modifier: Modifier = Modifier,
-    shape: Shape = LocalStyleTokens.current.compactShape,
-    color: Color = MaterialTheme.colorScheme.surface,
-    selected: Boolean = false,
-    onClick: (() -> Unit)? = null,
-    enabled: Boolean = true,
-    content: @Composable () -> Unit
+    modifier: Modifier = Modifier, shape: Shape = LocalStyleTokens.current.compactShape,
+    color: Color = MaterialTheme.colorScheme.surface, selected: Boolean = false,
+    onClick: (() -> Unit)? = null, enabled: Boolean = true, content: @Composable () -> Unit
 ) {
-    val tokens = LocalStyleTokens.current
-    val interactionSource = remember { MutableInteractionSource() }
-    val pressed by interactionSource.collectIsPressedAsState()
-    val baseAlpha = if (tokens.floatingGlass) tokens.surfaceOpacity else 1f
-    val stateAlpha = when { !enabled -> tokens.disabledAlpha; pressed -> (1f - tokens.pressedAlpha); else -> 1f }
-    val resolved = color.copy(alpha = baseAlpha * stateAlpha)
-    val surfaceModifier = if (onClick != null) modifier.clip(shape).background(Color.Transparent).then(
-        Modifier
-    ) else modifier
-    Surface(
-        modifier = surfaceModifier,
-        onClick = onClick ?: {},
-        enabled = enabled && onClick != null,
-        interactionSource = interactionSource,
-        shape = shape,
-        color = resolved,
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        border = styleBorder(selected),
-        tonalElevation = if (tokens.floatingGlass) tokens.cardElevation else androidx.compose.ui.unit.Dp.Unspecified,
-        content = content
-    )
+    val p = LocalThemePack.current
+    val interactions = remember { MutableInteractionSource() }
+    val pressed by interactions.collectIsPressedAsState()
+    val base = if (color == MaterialTheme.colorScheme.surface) p.surfaces.color.copy(alpha = p.surfaces.opacity) else color
+    val background = if (selected) p.accent.copy(alpha = p.states.selectionAlpha) else base
+    val resolved = if (pressed) background.copy(alpha = (background.alpha + p.states.pressedAlpha).coerceAtMost(1f)) else background
+    val foreground = if (color == p.accent && !selected) p.onAccent else p.text
+    val glowModifier = if (selected && p.surfaces.glowAlpha > 0) modifier.drawBehind {
+        drawRect(Brush.radialGradient(listOf(p.accent.copy(alpha = p.surfaces.glowAlpha), Color.Transparent),
+            Offset(size.width / 2, size.height / 2), maxOf(size.width, size.height) / 2 + p.surfaces.glowRadius.toPx()))
+    } else modifier
+    if (onClick == null) {
+        Surface(modifier = glowModifier, shape = shape, color = resolved, contentColor = foreground,
+            border = styleBorder(selected), tonalElevation = 0.dp, content = content)
+    } else {
+        Surface(onClick = onClick, enabled = enabled, modifier = glowModifier, shape = shape, color = resolved,
+            contentColor = if (enabled) foreground else foreground.copy(alpha = p.states.disabledAlpha),
+            border = styleBorder(selected), tonalElevation = 0.dp, interactionSource = interactions, content = content)
+    }
 }
 
 @Composable
 fun PlannerProgressIndicator(progress: () -> Float, modifier: Modifier = Modifier) {
-    val tokens = LocalStyleTokens.current
-    val animated by animateFloatAsState(
-        targetValue = progress().coerceIn(0f, 1f),
-        animationSpec = tween(tokens.motionDurationMillis),
-        label = "Planner progress"
-    )
-    LinearProgressIndicator(
-        progress = { animated },
-        modifier = modifier.height(tokens.progressHeight).clip(tokens.progressShape),
-        color = MaterialTheme.colorScheme.primary,
-        trackColor = if (tokens.floatingGlass) Color.White.copy(alpha = .10f) else MaterialTheme.colorScheme.outlineVariant,
-        gapSize = tokens.progressHeight / 2,
-        drawStopIndicator = {}
-    )
+    val p = LocalThemePack.current
+    val animated by animateFloatAsState(progress().coerceIn(0f, 1f), tween(160), label = "Planner progress")
+    LinearProgressIndicator(progress = { animated }, modifier = modifier.height(p.progressHeight).clip(LocalStyleTokens.current.progressShape),
+        color = p.accent, trackColor = p.secondaryText.copy(alpha = .18f), gapSize = 0.dp, drawStopIndicator = {})
 }

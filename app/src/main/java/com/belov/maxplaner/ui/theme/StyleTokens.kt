@@ -40,175 +40,18 @@ data class StyleTokens(
 }
 
 fun styleTokensFor(styleId: String): StyleTokens {
-    val shapes = shapesFor(styleId)
-    return when (styleId) {
-        "ultra_minimal" -> StyleTokens(
-            shapes = shapes,
-            cardElevation = 0.dp,
-            heroElevation = 0.dp,
-            borderWidth = .5.dp,
-            borderAlpha = .65f,
-            accentBorders = false,
-            heroHighlightAlpha = 0f,
-            insetSurfaceAlpha = 1f,
-            cardPadding = 12.dp,
-            screenPadding = 20.dp,
-            sectionSpacing = 10.dp,
-            progressHeight = 3.dp,
-            motionDurationMillis = 140,
-            navigationElevation = 0.dp,
-            floatingGlass = false,
-            surfaceOpacity = 1f,
-            pressedAlpha = .08f,
-            disabledAlpha = .38f
-        )
-        "luxe_dark" -> StyleTokens(
-            shapes = shapes,
-            cardElevation = 3.dp,
-            heroElevation = 6.dp,
-            borderWidth = .5.dp,
-            borderAlpha = .65f,
-            accentBorders = false,
-            heroHighlightAlpha = .035f,
-            insetSurfaceAlpha = .85f,
-            cardPadding = 18.dp,
-            screenPadding = 20.dp,
-            sectionSpacing = 14.dp,
-            progressHeight = 5.dp,
-            motionDurationMillis = 240,
-            navigationElevation = 3.dp,
-            floatingGlass = false,
-            surfaceOpacity = 1f,
-            pressedAlpha = .08f,
-            disabledAlpha = .38f
-        )
-        "midnight_neon" -> StyleTokens(
-            shapes = shapes,
-            cardElevation = 0.dp,
-            heroElevation = 2.dp,
-            borderWidth = 1.dp,
-            borderAlpha = .25f,
-            accentBorders = true,
-            heroHighlightAlpha = .06f,
-            insetSurfaceAlpha = .9f,
-            cardPadding = 14.dp,
-            screenPadding = 18.dp,
-            sectionSpacing = 12.dp,
-            progressHeight = 4.dp,
-            motionDurationMillis = 170,
-            navigationElevation = 0.dp,
-            floatingGlass = false,
-            surfaceOpacity = 1f,
-            pressedAlpha = .08f,
-            disabledAlpha = .38f
-        )
-        "rose_premium" -> StyleTokens(
-            shapes = shapes,
-            cardElevation = 1.dp,
-            heroElevation = 3.dp,
-            borderWidth = .5.dp,
-            borderAlpha = .35f,
-            accentBorders = false,
-            heroHighlightAlpha = .1f,
-            insetSurfaceAlpha = .75f,
-            cardPadding = 20.dp,
-            screenPadding = 20.dp,
-            sectionSpacing = 18.dp,
-            progressHeight = 8.dp,
-            motionDurationMillis = 280,
-            navigationElevation = 1.dp,
-            floatingGlass = false,
-            surfaceOpacity = 1f,
-            pressedAlpha = .08f,
-            disabledAlpha = .38f
-        )
-        "pure_white" -> StyleTokens(
-            shapes = shapes,
-            cardElevation = 0.dp,
-            heroElevation = 0.dp,
-            borderWidth = .5.dp,
-            borderAlpha = 1f,
-            accentBorders = false,
-            heroHighlightAlpha = 0f,
-            insetSurfaceAlpha = 1f,
-            cardPadding = 20.dp,
-            screenPadding = 20.dp,
-            sectionSpacing = 18.dp,
-            progressHeight = 2.dp,
-            motionDurationMillis = 140,
-            navigationElevation = 0.dp,
-            floatingGlass = false,
-            surfaceOpacity = 1f,
-            pressedAlpha = .08f,
-            disabledAlpha = .38f
-        )
-        else -> StyleTokens(
-            shapes = shapes,
-            cardElevation = 2.dp,
-            heroElevation = 5.dp,
-            borderWidth = .5.dp,
-            borderAlpha = .75f,
-            accentBorders = false,
-            heroHighlightAlpha = .09f,
-            insetSurfaceAlpha = .55f,
-            cardPadding = 18.dp,
-            screenPadding = 18.dp,
-            sectionSpacing = 14.dp,
-            progressHeight = 6.dp,
-            motionDurationMillis = 220,
-            navigationElevation = 6.dp,
-            floatingGlass = true,
-            surfaceOpacity = .74f,
-            pressedAlpha = .10f,
-            disabledAlpha = .42f
-        )
-    }
-}
-
-val LocalStyleTokens = staticCompositionLocalOf { styleTokensFor("executive_glass") }
-
-private fun shapesFor(styleId: String): Shapes = when (styleId) {
-    "ultra_minimal" -> Shapes(
-        extraSmall = RoundedCornerShape(6.dp),
-        small = RoundedCornerShape(8.dp),
-        medium = RoundedCornerShape(10.dp),
-        large = RoundedCornerShape(14.dp),
-        extraLarge = RoundedCornerShape(18.dp)
-    )
-    "luxe_dark" -> Shapes(
-        extraSmall = RoundedCornerShape(8.dp),
-        small = RoundedCornerShape(12.dp),
-        medium = RoundedCornerShape(14.dp),
-        large = RoundedCornerShape(18.dp),
-        extraLarge = RoundedCornerShape(24.dp)
-    )
-    "midnight_neon" -> Shapes(
-        extraSmall = RoundedCornerShape(8.dp),
-        small = RoundedCornerShape(12.dp),
-        medium = RoundedCornerShape(16.dp),
-        large = RoundedCornerShape(22.dp),
-        extraLarge = RoundedCornerShape(28.dp)
-    )
-    "rose_premium" -> Shapes(
-        extraSmall = RoundedCornerShape(12.dp),
-        small = RoundedCornerShape(16.dp),
-        medium = RoundedCornerShape(20.dp),
-        large = RoundedCornerShape(26.dp),
-        extraLarge = RoundedCornerShape(32.dp)
-    )
-    "pure_white" -> Shapes(
-        extraSmall = RoundedCornerShape(4.dp),
-        small = RoundedCornerShape(6.dp),
-        medium = RoundedCornerShape(8.dp),
-        large = RoundedCornerShape(10.dp),
-        extraLarge = RoundedCornerShape(14.dp)
-    )
-    else -> Shapes(
-        extraSmall = RoundedCornerShape(10.dp),
-        small = RoundedCornerShape(14.dp),
-        medium = RoundedCornerShape(18.dp),
-        large = RoundedCornerShape(24.dp),
-        extraLarge = RoundedCornerShape(30.dp)
+    val pack = ThemePacks.firstOrNull { it.id == styleId } ?: ThemePacks.first()
+    return StyleTokens(
+        shapes = Shapes(RoundedCornerShape(4.dp), RoundedCornerShape(12.dp),
+            RoundedCornerShape(pack.surfaces.compactRadius), RoundedCornerShape(pack.surfaces.cardRadius), RoundedCornerShape(20.dp)),
+        cardElevation = pack.surfaces.elevation, heroElevation = pack.surfaces.elevation,
+        borderWidth = .5.dp, borderAlpha = pack.surfaces.borderAlpha, accentBorders = false,
+        heroHighlightAlpha = .025f, insetSurfaceAlpha = .9f, cardPadding = 14.dp,
+        screenPadding = 20.dp, sectionSpacing = 12.dp, progressHeight = pack.progressHeight,
+        motionDurationMillis = 160, navigationElevation = 0.dp, floatingGlass = true,
+        surfaceOpacity = pack.surfaces.opacity, pressedAlpha = pack.states.pressedAlpha,
+        disabledAlpha = pack.states.disabledAlpha
     )
 }
 
+val LocalStyleTokens = staticCompositionLocalOf { styleTokensFor("clean_minimal") }

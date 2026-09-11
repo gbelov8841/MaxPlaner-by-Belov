@@ -1,222 +1,100 @@
 package com.belov.maxplaner.ui
 
-import com.belov.maxplaner.ui.icons.PrimeIcons
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Analytics
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.MoreHoriz
-import androidx.compose.material.icons.rounded.CalendarMonth
-import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.Palette
-import androidx.compose.material.icons.rounded.Spa
-import androidx.compose.material3.Icon
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.*
+import com.belov.maxplaner.data.PlannerStore
+import com.belov.maxplaner.ui.components.*
+import com.belov.maxplaner.ui.icons.PrimeIcons
+import com.belov.maxplaner.ui.screens.*
+import com.belov.maxplaner.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import com.belov.maxplaner.data.PlannerStore
-import com.belov.maxplaner.ui.screens.AnalyticsV2Screen
-import com.belov.maxplaner.ui.screens.AppearanceScreen
-import com.belov.maxplaner.ui.screens.CalendarScreen
-import com.belov.maxplaner.ui.screens.HabitsV2Screen
-import com.belov.maxplaner.ui.screens.TasksV2Screen
-import com.belov.maxplaner.ui.screens.TodayScreen
-import com.belov.maxplaner.ui.components.ActionSetupDialog
-import com.belov.maxplaner.ui.components.PlannerBackdrop
-import com.belov.maxplaner.ui.components.styleBorder
-import androidx.compose.material3.MaterialTheme
-import com.belov.maxplaner.ui.theme.LocalStyleTokens
-import com.belov.maxplaner.ui.theme.AppearanceStore
+import java.time.LocalDate
 
-private data class Tab(val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
-
-private val tabs = listOf(
-    Tab("today", "Главная", PrimeIcons.Home),
-    Tab("calendar", "План дня", PrimeIcons.Calendar),
-    Tab("analytics", "Прогресс", PrimeIcons.Progress),
-    Tab("appearance", "Ещё", PrimeIcons.More)
-)
+private data class Tab(val route: String, val label: String, val icon: ImageVector)
+private val tabs = listOf(Tab("today", "Главная", PrimeIcons.Home), Tab("calendar", "План", PrimeIcons.Calendar),
+    Tab("analytics", "Прогресс", PrimeIcons.Progress), Tab("more", "Ещё", PrimeIcons.More))
 
 @Composable
 fun MaxPlanerApp(appearance: AppearanceStore) {
     val context = LocalContext.current
     val store = remember { PlannerStore(context.applicationContext) }
-    val lifecycleOwner = LocalLifecycleOwner.current
-    LaunchedEffect(store, lifecycleOwner) {
-        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            while (isActive) {
-                store.refreshFocus()
-                delay(1000)
-            }
+    val owner = LocalLifecycleOwner.current
+    LaunchedEffect(store, owner) {
+        owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while (isActive) { store.refreshFocus(); delay(1000) }
         }
     }
-    val navController = rememberNavController()
-    val backStack by navController.currentBackStackEntryAsState()
+    val nav = rememberNavController()
+    val backStack by nav.currentBackStackEntryAsState()
     val route = backStack?.destination?.route ?: "today"
-    val tokens = LocalStyleTokens.current
-    val motionDuration = tokens.motionDurationMillis
-    var showQuickAdd by remember { mutableStateOf(false) }
-
-    val navigationContent: @Composable () -> Unit = {
-        NavigationBar(
-            containerColor = if (tokens.floatingGlass) Color.Transparent else MaterialTheme.colorScheme.surface,
-            tonalElevation = if (tokens.floatingGlass) 0.dp else tokens.navigationElevation
-        ) {
-                tabs.take(2).forEach { tab ->
-                    NavigationBarItem(
-                        selected = route == tab.route,
-                        onClick = {
-                            navController.navigate(tab.route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(tab.icon, contentDescription = tab.label) },
-                        label = { Text(tab.label, maxLines = 1) },
-                        alwaysShowLabel = true,
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.primary,
-                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                            indicatorColor = if (tokens.floatingGlass) MaterialTheme.colorScheme.primary.copy(alpha = .12f) else MaterialTheme.colorScheme.surfaceVariant,
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .72f),
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .72f)
-                        )
-                    )
-                }
-                FloatingActionButton(
-                    onClick = { showQuickAdd = true },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = tokens.navigationElevation)
-                ) {
-                    Icon(Icons.Rounded.Add, contentDescription = "Добавить")
-                }
-                tabs.drop(2).forEach { tab ->
-                    NavigationBarItem(
-                        selected = route == tab.route,
-                        onClick = {
-                            navController.navigate(tab.route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(tab.icon, contentDescription = tab.label) },
-                        label = { Text(tab.label, maxLines = 1) },
-                        alwaysShowLabel = true,
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.primary,
-                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                            indicatorColor = if (tokens.floatingGlass) MaterialTheme.colorScheme.primary.copy(alpha = .12f) else MaterialTheme.colorScheme.surfaceVariant,
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .72f),
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .72f)
-                        )
-                    )
-                }
-            }
+    var selectedDate by rememberSaveable { mutableStateOf(store.today.toString()) }
+    var quickAdd by rememberSaveable { mutableStateOf(false) }
+    val p = LocalThemePack.current
+    fun navigate(destination: String) {
+        nav.navigate(destination) {
+            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+            launchSingleTop = true; restoreState = true
         }
-
-    Box {
+    }
+    Box(Modifier.fillMaxSize()) {
         PlannerBackdrop()
-        Scaffold(
-            containerColor = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.onBackground,
-            bottomBar = {
-                if (tokens.floatingGlass) {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 8.dp)
-                            .navigationBarsPadding(),
-                        shape = tokens.heroShape,
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = .82f),
-                        border = styleBorder(),
-                        tonalElevation = tokens.navigationElevation
-                    ) {
-                        navigationContent()
+        Scaffold(containerColor = Color.Transparent, contentColor = p.text, bottomBar = {
+            Box(Modifier.navigationBarsPadding().padding(horizontal = 16.dp, vertical = 8.dp)) {
+                PlannerSurface(shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
+                    Row(Modifier.fillMaxWidth().heightIn(min = p.navigationHeight).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                        tabs.forEachIndexed { index, tab ->
+                            if (index == 2) Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                                IconButton(onClick = { quickAdd = true }, modifier = Modifier.size(48.dp)) {
+                                    PlannerSurface(modifier = Modifier.size(p.addSize), shape = CircleShape,
+                                        color = p.accent.copy(alpha = .14f)) {
+                                        Box(contentAlignment = Alignment.Center) { Icon(Icons.Rounded.Add, "Добавить", Modifier.size(24.dp), tint = p.text) }
+                                    }
+                                }
+                            }
+                            val selected = route == tab.route || (tab.route == "more" && route in listOf("appearance", "habits", "tasks", "settings"))
+                            Column(Modifier.weight(1f).heightIn(min = 56.dp).selectable(selected = selected, role = Role.Tab,
+                                onClick = { navigate(tab.route) }).padding(vertical = 10.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                Icon(tab.icon, null, Modifier.size(20.dp), tint = if (selected) p.accent else p.secondaryText)
+                                Text(tab.label, style = MaterialTheme.typography.labelSmall, color = if (selected) p.text else p.secondaryText)
+                            }
+                        }
                     }
-                } else {
-                    navigationContent()
                 }
             }
-        ) { padding ->
-            Box(Modifier.padding(padding)) {
-            NavHost(
-                navController = navController,
-                startDestination = "today",
-                enterTransition = {
-                    val from = tabs.indexOfFirst { it.route == initialState.destination.route }
-                    val to = tabs.indexOfFirst { it.route == targetState.destination.route }
-                    val direction = if (from >= 0 && to >= 0 && to < from) -1 else 1
-                    fadeIn(tween(motionDuration)) +
-                        slideInHorizontally(tween(motionDuration)) { full -> direction * full / 10 }
-                },
-                exitTransition = {
-                    val from = tabs.indexOfFirst { it.route == initialState.destination.route }
-                    val to = tabs.indexOfFirst { it.route == targetState.destination.route }
-                    val direction = if (from >= 0 && to >= 0 && to < from) -1 else 1
-                    fadeOut(tween(motionDuration / 2)) +
-                        slideOutHorizontally(tween(motionDuration)) { full -> -direction * full / 12 }
-                },
-                popEnterTransition = { EnterTransition.None },
-                popExitTransition = { ExitTransition.None }
-            ) {
-                composable("today") {
-                    TodayScreen(
-                        store = store,
-                        onOpenPlan = { navController.navigate("calendar") { launchSingleTop = true } },
-                        onOpenProgress = { navController.navigate("analytics") { launchSingleTop = true } },
-                        onOpenHabits = { navController.navigate("habits") { launchSingleTop = true } }
-                    )
-                }
-                composable("calendar") { CalendarScreen(store) }
+        }) { padding ->
+            NavHost(nav, startDestination = "today", modifier = Modifier.padding(padding)) {
+                composable("today") { TodayScreen(store, appearance.displayName,
+                    onOpenPlan = { selectedDate = it.toString(); navigate("calendar") },
+                    onOpenProgress = { navigate("analytics") }, onOpenHabits = { navigate("habits") }) }
+                composable("calendar") { PlanDayScreen(store, selectedDate) { selectedDate = it.toString() } }
                 composable("tasks") { TasksV2Screen(store) }
                 composable("habits") { HabitsV2Screen(store) }
-                composable("analytics") { AnalyticsV2Screen(store, onOpenTasks = { navController.navigate("tasks") { launchSingleTop = true } }, onOpenHabits = { navController.navigate("habits") { launchSingleTop = true } }, onAdd = { showQuickAdd = true }) }
-                composable("appearance") { AppearanceScreen(appearance, onOpenTasks = { navController.navigate("tasks") { launchSingleTop = true } }, onOpenHabits = { navController.navigate("habits") { launchSingleTop = true } }) }
+                composable("analytics") { AnalyticsV2Screen(store, { navigate("tasks") }, { navigate("habits") }, { quickAdd = true }) }
+                composable("more") { MoreScreen(onNavigate = { navigate(it) }) }
+                composable("appearance") { AppearanceScreen(appearance) }
+                composable("settings") { SettingsScreen(appearance) }
             }
         }
     }
-    }
-    if (showQuickAdd) ActionSetupDialog(store, onDismiss = { showQuickAdd = false })
+    if (quickAdd) ActionSetupDialog(store, onDismiss = { quickAdd = false })
 }
-
-
