@@ -209,6 +209,7 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
             }
         }
     }
+    }
     if (showQuickAdd) ActionSetupDialog(store, onDismiss = { showQuickAdd = false })
 }
 
