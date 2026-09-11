@@ -26,7 +26,9 @@ data class StyleTokens(
     val motionDurationMillis: Int,
     val navigationElevation: Dp,
     val floatingGlass: Boolean,
-    val surfaceOpacity: Float
+    val surfaceOpacity: Float,
+    val pressedAlpha: Float,
+    val disabledAlpha: Float
 ) {
     val heroShape: Shape get() = shapes.extraLarge
     val cardShape: Shape get() = shapes.large
@@ -56,7 +58,9 @@ fun styleTokensFor(styleId: String): StyleTokens {
             motionDurationMillis = 140,
             navigationElevation = 0.dp,
             floatingGlass = false,
-            surfaceOpacity = 1f
+            surfaceOpacity = 1f,
+            pressedAlpha = .08f,
+            disabledAlpha = .38f
         )
         "luxe_dark" -> StyleTokens(
             shapes = shapes,
@@ -74,7 +78,9 @@ fun styleTokensFor(styleId: String): StyleTokens {
             motionDurationMillis = 240,
             navigationElevation = 3.dp,
             floatingGlass = false,
-            surfaceOpacity = 1f
+            surfaceOpacity = 1f,
+            pressedAlpha = .08f,
+            disabledAlpha = .38f
         )
         "midnight_neon" -> StyleTokens(
             shapes = shapes,
@@ -92,7 +98,9 @@ fun styleTokensFor(styleId: String): StyleTokens {
             motionDurationMillis = 170,
             navigationElevation = 0.dp,
             floatingGlass = false,
-            surfaceOpacity = 1f
+            surfaceOpacity = 1f,
+            pressedAlpha = .08f,
+            disabledAlpha = .38f
         )
         "rose_premium" -> StyleTokens(
             shapes = shapes,
@@ -110,7 +118,9 @@ fun styleTokensFor(styleId: String): StyleTokens {
             motionDurationMillis = 280,
             navigationElevation = 1.dp,
             floatingGlass = false,
-            surfaceOpacity = 1f
+            surfaceOpacity = 1f,
+            pressedAlpha = .08f,
+            disabledAlpha = .38f
         )
         "pure_white" -> StyleTokens(
             shapes = shapes,
@@ -128,7 +138,9 @@ fun styleTokensFor(styleId: String): StyleTokens {
             motionDurationMillis = 140,
             navigationElevation = 0.dp,
             floatingGlass = false,
-            surfaceOpacity = 1f
+            surfaceOpacity = 1f,
+            pressedAlpha = .08f,
+            disabledAlpha = .38f
         )
         else -> StyleTokens(
             shapes = shapes,
@@ -146,7 +158,9 @@ fun styleTokensFor(styleId: String): StyleTokens {
             motionDurationMillis = 220,
             navigationElevation = 6.dp,
             floatingGlass = true,
-            surfaceOpacity = .74f
+            surfaceOpacity = .74f,
+            pressedAlpha = .10f,
+            disabledAlpha = .42f
         )
     }
 }
