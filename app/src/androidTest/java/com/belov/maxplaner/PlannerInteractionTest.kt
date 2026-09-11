@@ -57,6 +57,23 @@ class PlannerInteractionTest {
         ui.onNodeWithText(other.format(DateTimeFormatter.ofPattern("d MMMM, EEEE", Locale("ru")))).assertIsDisplayed()
     }
 
+    @Test fun checkboxCompletesWithoutOpeningDetailAndBodyOpensDetail() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val task = PlannerStore(context).tasks.first { it.dueDate == LocalDate.now().toString() }
+        ui.onNodeWithText("Главная").performClick()
+        ui.onNodeWithContentDescription(task.title).performClick()
+        ui.onNodeWithText("План на сегодня").assertIsDisplayed()
+        assertEquals(!task.completed, PlannerStore(context).tasks.first { it.id == task.id }.completed)
+        ui.onNodeWithContentDescription(task.title).performClick()
+        ui.onNodeWithText(task.title).performClick()
+        ui.onNodeWithText("Детали дела").assertIsDisplayed()
+        ui.onNodeWithContentDescription("Удалить дело").performClick()
+        ui.onNodeWithText("Удалить дело?").assertIsDisplayed()
+        ui.onNodeWithText("Отмена").performClick()
+        assertTrue(PlannerStore(context).tasks.any { it.id == task.id })
+        screenshot("task-detail")
+    }
+
     @Test fun taskCompletionAndHabitRenameSurviveStoreReload() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         ui.runOnIdle {

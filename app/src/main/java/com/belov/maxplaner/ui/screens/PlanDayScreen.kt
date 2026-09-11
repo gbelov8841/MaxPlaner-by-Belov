@@ -1,6 +1,8 @@
 package com.belov.maxplaner.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -153,7 +155,15 @@ internal fun PlannerMonth(selected: LocalDate, today: LocalDate, count: (LocalDa
     val first = month.atDay(1)
     val offset = first.dayOfWeek.value - 1
     val weeks = (offset + month.lengthOfMonth() + 6) / 7
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+    Column(Modifier.horizontalScroll(rememberScrollState()).width(maxOf(maxWidth, 348.dp)), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(Modifier.fillMaxWidth()) {
+            DayOfWeek.entries.forEach { weekday ->
+                Text(weekday.getDisplayName(java.time.format.TextStyle.SHORT, Locale("ru")), Modifier.weight(1f),
+                    style = MaterialTheme.typography.labelSmall, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
         Text(selected.format(DateTimeFormatter.ofPattern("LLLL yyyy", Locale("ru"))), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(vertical = 8.dp))
         repeat(weeks) { week ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -175,4 +185,5 @@ internal fun PlannerMonth(selected: LocalDate, today: LocalDate, count: (LocalDa
             }
         }
     }
+}
 }

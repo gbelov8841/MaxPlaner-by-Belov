@@ -139,8 +139,11 @@ internal fun HabitScheduleDialog(
     var slotDuration by rememberSaveable { mutableStateOf(initialDuration.toString()) }
     val parsedDuration = slotDuration.toIntOrNull()
     var name by rememberSaveable { mutableStateOf(if (allowName) initialName else title) }
-    var type by remember { mutableStateOf(initialSchedule.type) }
-    var selectedDays by remember { mutableStateOf(initialSchedule.weekdays) }
+    var type by rememberSaveable { mutableStateOf(initialSchedule.type) }
+    val daysSaver = androidx.compose.runtime.saveable.Saver<Set<DayOfWeek>, ArrayList<String>>(
+        save = { ArrayList(it.map { day -> day.name }) },
+        restore = { names -> names.map { DayOfWeek.valueOf(it) }.toSet() })
+    var selectedDays by rememberSaveable(stateSaver = daysSaver) { mutableStateOf(initialSchedule.weekdays) }
     val valid = (slotStart == null || parsedDuration != null && parsedDuration in 15..720) && name.isNotBlank() && (type == HabitScheduleType.DAILY || selectedDays.isNotEmpty())
     val tokens = LocalStyleTokens.current
 

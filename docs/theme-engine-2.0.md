@@ -106,7 +106,7 @@ All colors are sRGB hex. Alpha is a float. Sizes are dp; font sizes are sp.
 | activeGlowAlpha | .03 | 0 | .09 | .04 | .12 |
 | activeGlowRadius | 8 | 0 | 12 | 8 | 14 |
 | artworkScrim | #07111C | #EFF3F3 | #06101E | #21160F | #0C091A |
-| scrimTop/middle/bottom | .14/.40/.88 | .12/.28/.78 | .12/.44/.90 | .20/.46/.90 | .22/.50/.92 |
+| scrimTop/middle/bottom | .14/.40/.88 | .12/.28/.78 | .74/.62/.90 | .72/.62/.90 | .22/.50/.92 |
 | artwork focal X/Y | .50/.23 | .70/.30 | .70/.16 | .50/.23 | .65/.25 |
 
 Artwork: cold mountain lake; pale mist with restrained foliage; blue planet and night sky;
