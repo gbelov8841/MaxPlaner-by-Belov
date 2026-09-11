@@ -104,7 +104,7 @@ fun TodayScreen(store: PlannerStore) {
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Сегодня", style = MaterialTheme.typography.labelLarge, color = Color(0xFF8CA7BC))
+                        Text("Сегодня", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(
                             if (total == 0) "Собери свой день" else if (done == total) "План выполнен" else "Держим ритм",
                             style = MaterialTheme.typography.titleLarge,
@@ -124,14 +124,14 @@ fun TodayScreen(store: PlannerStore) {
                             progress = { if (total == 0) 0f else progress },
                             modifier = Modifier.size(72.dp),
                             strokeWidth = 6.dp,
-                            color = Color(0xFFE8C56A),
-                            trackColor = Color(0xFF24384A)
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant
                         )
                         Text(
                             if (total == 0) "0%" else "${(progress * 100).toInt()}%",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFFE8C56A)
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
@@ -154,8 +154,8 @@ fun TodayScreen(store: PlannerStore) {
                         color = MaterialTheme.colorScheme.surfaceVariant
                     ) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Surface(shape = tokens.compactShape, color = Color(0xFF5CA8FF).copy(alpha = .14f)) {
-                                Icon(Icons.Rounded.AutoAwesome, null, tint = Color(0xFF78B7FF), modifier = Modifier.padding(10.dp).size(24.dp))
+                            Surface(shape = tokens.compactShape, color = MaterialTheme.colorScheme.secondaryContainer) {
+                                Icon(Icons.Rounded.AutoAwesome, null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.padding(10.dp).size(24.dp))
                             }
                             Text("Готовое", fontWeight = FontWeight.SemiBold)
                             Text("Из каталога", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -167,8 +167,8 @@ fun TodayScreen(store: PlannerStore) {
                         color = MaterialTheme.colorScheme.surfaceVariant
                     ) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Surface(shape = tokens.compactShape, color = Color(0xFFE8C56A).copy(alpha = .12f)) {
-                                Icon(Icons.Rounded.Add, null, tint = Color(0xFFE8C56A), modifier = Modifier.padding(10.dp).size(24.dp))
+                            Surface(shape = tokens.compactShape, color = MaterialTheme.colorScheme.primaryContainer) {
+                                Icon(Icons.Rounded.Add, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.padding(10.dp).size(24.dp))
                             }
                             Text("Создать своё", fontWeight = FontWeight.SemiBold)
                             Text("Своя цель", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -238,7 +238,7 @@ private fun SectionTitle(title: String) {
 @Composable
 private fun TodayTaskRow(store: PlannerStore, task: com.belov.maxplaner.data.PlannerTask, prominent: Boolean, onOpen: () -> Unit) {
     PlannerCard(modifier = Modifier.fillMaxWidth().clickable(onClick = onOpen), shape = LocalStyleTokens.current.compactShape,
-        colors = CardDefaults.cardColors(containerColor = if (prominent) Color(0xFF162432) else Color(0xFF101C29))) {
+        colors = CardDefaults.cardColors(containerColor = if (prominent) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface)) {
         Row(Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
             CompletionButton(task.completed, task.title) { store.toggleTask(task.id) }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
