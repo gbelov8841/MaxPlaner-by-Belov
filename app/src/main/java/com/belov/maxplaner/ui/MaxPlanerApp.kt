@@ -10,6 +10,8 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Analytics
@@ -27,6 +29,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -39,8 +42,10 @@ import kotlinx.coroutines.isActive
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -55,6 +60,8 @@ import com.belov.maxplaner.ui.screens.HabitsV2Screen
 import com.belov.maxplaner.ui.screens.TasksV2Screen
 import com.belov.maxplaner.ui.screens.TodayScreen
 import com.belov.maxplaner.ui.components.ActionSetupDialog
+import com.belov.maxplaner.ui.components.PlannerBackdrop
+import com.belov.maxplaner.ui.components.styleBorder
 import androidx.compose.material3.MaterialTheme
 import com.belov.maxplaner.ui.theme.LocalStyleTokens
 import com.belov.maxplaner.ui.theme.AppearanceStore
@@ -84,15 +91,15 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
     val navController = rememberNavController()
     val backStack by navController.currentBackStackEntryAsState()
     val route = backStack?.destination?.route ?: "today"
-    val motionDuration = LocalStyleTokens.current.motionDurationMillis
+    val tokens = LocalStyleTokens.current
+    val motionDuration = tokens.motionDurationMillis
     var showQuickAdd by remember { mutableStateOf(false) }
 
-    Scaffold(
-        bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface,
-                tonalElevation = LocalStyleTokens.current.navigationElevation
-            ) {
+    val navigationContent: @Composable () -> Unit = {
+        NavigationBar(
+            containerColor = if (tokens.floatingGlass) Color.Transparent else MaterialTheme.colorScheme.surface,
+            tonalElevation = if (tokens.floatingGlass) 0.dp else tokens.navigationElevation
+        ) {
                 tabs.take(2).forEach { tab ->
                     NavigationBarItem(
                         selected = route == tab.route,
@@ -107,9 +114,9 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
                         label = { Text(tab.label, maxLines = 1) },
                         alwaysShowLabel = true,
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = androidx.compose.ui.graphics.Color(0xFFE8C56A),
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
                             selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                            indicatorColor = androidx.compose.ui.graphics.Color(0xFF243246),
+                            indicatorColor = if (tokens.floatingGlass) MaterialTheme.colorScheme.primary.copy(alpha = .12f) else MaterialTheme.colorScheme.surfaceVariant,
                             unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .72f),
                             unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .72f)
                         )
@@ -117,9 +124,9 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
                 }
                 FloatingActionButton(
                     onClick = { showQuickAdd = true },
-                    containerColor = androidx.compose.ui.graphics.Color(0xFFE8C56A),
-                    contentColor = androidx.compose.ui.graphics.Color(0xFF0B1118),
-                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = LocalStyleTokens.current.navigationElevation)
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = tokens.navigationElevation)
                 ) {
                     Icon(Icons.Rounded.Add, contentDescription = "Добавить")
                 }
@@ -135,11 +142,11 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
                         },
                         icon = { Icon(tab.icon, contentDescription = tab.label) },
                         label = { Text(tab.label, maxLines = 1) },
-                        alwaysShowLabel = route == tab.route,
+                        alwaysShowLabel = true,
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = androidx.compose.ui.graphics.Color(0xFFE8C56A),
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
                             selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                            indicatorColor = androidx.compose.ui.graphics.Color(0xFF243246),
+                            indicatorColor = if (tokens.floatingGlass) MaterialTheme.colorScheme.primary.copy(alpha = .12f) else MaterialTheme.colorScheme.surfaceVariant,
                             unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .72f),
                             unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .72f)
                         )
@@ -147,8 +154,32 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
                 }
             }
         }
-    ) { padding ->
-        Box(Modifier.padding(padding)) {
+    }
+
+    Box {
+        PlannerBackdrop()
+        Scaffold(
+            containerColor = Color.Transparent,
+            bottomBar = {
+                if (tokens.floatingGlass) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                            .navigationBarsPadding(),
+                        shape = tokens.heroShape,
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = .82f),
+                        border = styleBorder(),
+                        tonalElevation = tokens.navigationElevation
+                    ) {
+                        navigationContent()
+                    }
+                } else {
+                    navigationContent()
+                }
+            }
+        ) { padding ->
+            Box(Modifier.padding(padding)) {
             NavHost(
                 navController = navController,
                 startDestination = "today",
@@ -180,4 +211,5 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
     }
     if (showQuickAdd) ActionSetupDialog(store, onDismiss = { showQuickAdd = false })
 }
+
 
