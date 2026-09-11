@@ -19,6 +19,7 @@ import com.belov.maxplaner.ui.theme.LocalStyleTokens
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActionSetupDialog(store: PlannerStore, onDismiss: () -> Unit, template: ActionTemplate? = null, category: String = "Личное", initialDate: LocalDate = store.today, initialStartMinutes: Int? = null) {
+    val tokens = LocalStyleTokens.current
     var title by rememberSaveable { mutableStateOf(template?.title ?: "") }
     var type by rememberSaveable { mutableStateOf(template?.type ?: TrackerType.CHECK) }
     var period by rememberSaveable { mutableStateOf(if (template?.type == TrackerType.REDUCTION_GOAL) "Повторять" else "Сегодня") }
