@@ -150,11 +150,11 @@ fun TodayScreen(store: PlannerStore) {
                 if (stackQuickAdd) Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Surface(
                         modifier = Modifier.fillMaxWidth().clickable { showCatalog = true },
-                        shape = RoundedCornerShape(20.dp),
-                        color = Color(0xFF13283A)
+                        shape = tokens.cardShape,
+                        color = MaterialTheme.colorScheme.surfaceVariant
                     ) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Surface(shape = RoundedCornerShape(14.dp), color = Color(0xFF5CA8FF).copy(alpha = .14f)) {
+                            Surface(shape = tokens.compactShape, color = Color(0xFF5CA8FF).copy(alpha = .14f)) {
                                 Icon(Icons.Rounded.AutoAwesome, null, tint = Color(0xFF78B7FF), modifier = Modifier.padding(10.dp).size(24.dp))
                             }
                             Text("Готовое", fontWeight = FontWeight.SemiBold)
@@ -163,11 +163,11 @@ fun TodayScreen(store: PlannerStore) {
                     }
                     Surface(
                         modifier = Modifier.fillMaxWidth().clickable { showAdd = true },
-                        shape = RoundedCornerShape(20.dp),
-                        color = Color(0xFF182535)
+                        shape = tokens.cardShape,
+                        color = MaterialTheme.colorScheme.surfaceVariant
                     ) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Surface(shape = RoundedCornerShape(14.dp), color = Color(0xFFE8C56A).copy(alpha = .12f)) {
+                            Surface(shape = tokens.compactShape, color = Color(0xFFE8C56A).copy(alpha = .12f)) {
                                 Icon(Icons.Rounded.Add, null, tint = Color(0xFFE8C56A), modifier = Modifier.padding(10.dp).size(24.dp))
                             }
                             Text("Создать своё", fontWeight = FontWeight.SemiBold)
@@ -334,12 +334,12 @@ private fun PrimeCategoryGrid() {
                 row.forEach { (title, icon, tint) ->
                     Surface(
                         modifier = Modifier.weight(1f).heightIn(min = 108.dp),
-                        shape = RoundedCornerShape(22.dp),
-                        color = Color(0xFF101C29),
+                        shape = tokens.cardShape,
+                        color = MaterialTheme.colorScheme.surface,
                         tonalElevation = 1.dp
                     ) {
                         Column(Modifier.padding(vertical = 16.dp, horizontal = 8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Surface(shape = RoundedCornerShape(14.dp), color = tint.copy(alpha = .14f)) {
+                            Surface(shape = tokens.compactShape, color = tint.copy(alpha = .14f)) {
                                 Icon(icon, null, tint = tint, modifier = Modifier.padding(10.dp).size(26.dp))
                             }
                             Text(title, style = MaterialTheme.typography.labelMedium, maxLines = 1)
