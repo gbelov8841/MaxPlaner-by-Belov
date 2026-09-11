@@ -195,7 +195,7 @@ internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit) {
                     val meta = categoryMeta(category!!)
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(20.dp),
+                        shape = tokens.cardShape,
                         color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .72f)
                     ) {
                         Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
