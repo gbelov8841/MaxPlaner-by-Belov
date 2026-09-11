@@ -148,10 +148,11 @@ fun TodayScreen(store: PlannerStore) {
                 SectionTitle("Быстрое добавление")
                 val stackQuickAdd = LocalDensity.current.fontScale > 1.2f
                 if (stackQuickAdd) Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth().clickable { showCatalog = true },
+                    PlannerSurface(
+                        modifier = Modifier.fillMaxWidth(),
                         shape = tokens.cardShape,
-                        color = MaterialTheme.colorScheme.surfaceVariant
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        onClick = { showCatalog = true }
                     ) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Surface(shape = tokens.compactShape, color = MaterialTheme.colorScheme.secondaryContainer) {
@@ -161,10 +162,11 @@ fun TodayScreen(store: PlannerStore) {
                             Text("Из каталога", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
-                    Surface(
-                        modifier = Modifier.fillMaxWidth().clickable { showAdd = true },
+                    PlannerSurface(
+                        modifier = Modifier.fillMaxWidth(),
                         shape = tokens.cardShape,
-                        color = MaterialTheme.colorScheme.surfaceVariant
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        onClick = { showAdd = true }
                     ) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Surface(shape = tokens.compactShape, color = MaterialTheme.colorScheme.primaryContainer) {
