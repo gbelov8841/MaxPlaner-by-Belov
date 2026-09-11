@@ -49,7 +49,7 @@ fun TodayScreen(
     var selectedTaskId by rememberSaveable { mutableStateOf<String?>(null) }
     var showAdd by rememberSaveable { mutableStateOf(false) }
     var showCatalog by rememberSaveable { mutableStateOf(false) }
-    var catalogCategory by rememberSaveable { mutableStateOf<ActionCategory?>(null) }
+    var catalogCategory by remember { mutableStateOf<ActionCategory?>(null) }
     val selectedTask = store.tasks.firstOrNull { it.id == selectedTaskId }
     if (selectedTask != null) {
         TaskDetailScreen(store, selectedTask) { selectedTaskId = null }
