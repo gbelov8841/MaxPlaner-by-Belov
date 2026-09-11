@@ -472,9 +472,29 @@ fun AnalyticsScreen(store: PlannerStore) {
         item { ProgressCard("Задачи", "$completed из $total выполнено", taskProgress) }
         item { ProgressCard("Привычки сегодня", "${(habitProgress * 100).toInt()}% выполнено", habitProgress) }
         item {
+            Text("Ключевые показатели", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = Color(0xFFF1F5F3))
+        }
+        item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)) {
                 StatCard("${store.focusMinutes}", "минут фокуса", Modifier.weight(1f))
                 StatCard("$bestStreak", "лучшая серия", Modifier.weight(1f))
+            }
+        }
+        item {
+            PlannerCard(shape = LocalStyleTokens.current.cardShape) {
+                Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Ритм дня", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = Color(0xFFF1F5F3))
+                    Text(
+                        when {
+                            taskProgress >= 0.8f && habitProgress >= 0.8f -> "Сильный день. Основной план почти закрыт."
+                            taskProgress >= 0.5f || habitProgress >= 0.5f -> "Хороший темп. Продолжай закрывать главное."
+                            total == 0 && store.habits.isEmpty() -> "Добавь первые задачи и привычки — здесь появится динамика."
+                            else -> "День только набирает темп. Начни с одного главного действия."
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF9FB0BD)
+                    )
+                }
             }
         }
     }
