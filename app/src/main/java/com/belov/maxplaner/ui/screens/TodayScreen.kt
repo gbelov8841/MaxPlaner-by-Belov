@@ -28,6 +28,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -145,9 +146,10 @@ fun TodayScreen(store: PlannerStore) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 SectionTitle("Быстрое добавление")
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                val stackQuickAdd = LocalDensity.current.fontScale > 1.2f
+                if (stackQuickAdd) Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Surface(
-                        modifier = Modifier.weight(1f).clickable { showCatalog = true },
+                        modifier = Modifier.fillMaxWidth().clickable { showCatalog = true },
                         shape = RoundedCornerShape(20.dp),
                         color = Color(0xFF13283A)
                     ) {
@@ -160,7 +162,7 @@ fun TodayScreen(store: PlannerStore) {
                         }
                     }
                     Surface(
-                        modifier = Modifier.weight(1f).clickable { showAdd = true },
+                        modifier = Modifier.fillMaxWidth().clickable { showAdd = true },
                         shape = RoundedCornerShape(20.dp),
                         color = Color(0xFF182535)
                     ) {
@@ -172,6 +174,9 @@ fun TodayScreen(store: PlannerStore) {
                             Text("Своя цель", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
+                } else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    QuickAddCard("Готовое", "Из каталога", Icons.Rounded.AutoAwesome) { showCatalog = true }
+                    QuickAddCard("Создать своё", "Своя цель", Icons.Rounded.Add) { showAdd = true }
                 }
             }
         }
