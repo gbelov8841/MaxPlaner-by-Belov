@@ -153,7 +153,6 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
                 }
             }
         }
-    }
 
     Box {
         PlannerBackdrop()
