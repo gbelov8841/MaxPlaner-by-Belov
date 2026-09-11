@@ -1,5 +1,7 @@
 package com.belov.maxplaner.ui.screens
 
+import com.belov.maxplaner.data.categoryLabel
+
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.belov.maxplaner.ui.components.ActionSetupDialog
 import com.belov.maxplaner.ui.components.TrackerCard
@@ -237,7 +239,7 @@ private fun TodayTaskRow(store: PlannerStore, task: com.belov.maxplaner.data.Pla
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(task.title, style = MaterialTheme.typography.titleMedium,
                     textDecoration = if (task.completed) TextDecoration.LineThrough else null)
-                Text(task.startMinutes?.let { "%02d:%02d · %d мин".format(it / 60, it % 60, task.durationMinutes) } ?: task.category,
+                Text(task.startMinutes?.let { "%02d:%02d · %d мин".format(it / 60, it % 60, task.durationMinutes) } ?: categoryLabel(task.category),
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Icon(Icons.Rounded.ChevronRight, "Открыть детали", tint = MaterialTheme.colorScheme.onSurfaceVariant)

@@ -190,3 +190,7 @@ object ActionCatalog {
     private val popularTitles = listOf("3 главных дела", "Стаканы воды", "10 000 шагов", "Тренировка", "Чтение", "Сон 8 часов", "Лечь вовремя", "Фокус 25 минут", "Вес", "Не курить сегодня", "Сигареты за день", "Кофе", "Без алкоголя", "Экранное время", "Медитация", "План на завтра")
     val popular = popularTitles.map { title -> templates.first { it.title == title } }
 }
+
+/** Strip legacy decorative prefixes only for known catalog labels; preserve user categories and storage. */
+fun categoryLabel(value: String): String = ActionCategory.entries.firstOrNull { it.title == value }
+    ?.title?.substringAfter(" ") ?: value

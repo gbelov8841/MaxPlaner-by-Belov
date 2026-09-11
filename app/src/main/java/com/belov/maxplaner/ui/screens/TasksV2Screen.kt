@@ -1,5 +1,10 @@
 package com.belov.maxplaner.ui.screens
 
+import com.belov.maxplaner.ui.icons.PrimeIcons
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.foundation.layout.size
+import com.belov.maxplaner.data.categoryLabel
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -127,7 +132,7 @@ fun TasksV2Screen(store: PlannerStore) {
                             textDecoration = if (task.completed) TextDecoration.LineThrough else null
                         )
                         Text(
-                            task.startMinutes?.let { com.belov.maxplaner.data.timeRange(it, task.durationMinutes) } ?: task.category,
+                            task.startMinutes?.let { com.belov.maxplaner.data.timeRange(it, task.durationMinutes) } ?: categoryLabel(task.category),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -160,7 +165,7 @@ internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit) {
         else category?.let { c -> ActionCatalog.templates.filter { it.category == c } } ?: ActionCatalog.popular
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(category?.title ?: "⭐ Популярное") },
+        title = { Text(category?.title?.let(::categoryLabel) ?: "Популярное") },
         text = {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 item { OutlinedTextField(query, { query = it }, label = { Text("Найти действие") }, singleLine = true, modifier = Modifier.fillMaxWidth()) }
@@ -172,7 +177,7 @@ internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit) {
                         exit = fadeOut() + shrinkVertically()
                     ) {
                         Column(Modifier.animateContentSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            CategoryRow("⭐", "Популярное", "Часто выбирают", category == null) { category = null; query = ""; showCategories = false }
+                            CategoryRow(PrimeIcons.Progress, "Популярное", "Часто выбирают", category == null) { category = null; query = ""; showCategories = false }
                             ActionCategory.entries.forEach { c ->
                                 val meta = categoryMeta(c)
                                 CategoryRow(meta.first, c.title.substringAfter(" "), meta.second, category == c) { category = c; query = ""; showCategories = false }
@@ -188,7 +193,7 @@ internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit) {
                         color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .72f)
                     ) {
                         Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text(meta.first, style = MaterialTheme.typography.headlineMedium)
+                            Icon(meta.first, null, Modifier.size(28.dp), tint = MaterialTheme.colorScheme.primary)
                             Spacer(Modifier.width(12.dp))
                             Column(Modifier.weight(1f)) {
                                 Text(category!!.title.substringAfter(" "), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
@@ -204,7 +209,7 @@ internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit) {
                     PlannerCard(modifier = Modifier.fillMaxWidth().clickable { selectedTitle = action.title }) {
                         Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                             Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
-                                Text(actionTypeIcon(action.type), modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp))
+                                Icon(categoryMeta(action.category).first, null, modifier = Modifier.padding(10.dp).size(24.dp), tint = MaterialTheme.colorScheme.primary)
                             }
                             Spacer(Modifier.width(12.dp))
                             Column(Modifier.weight(1f)) {
@@ -224,7 +229,7 @@ internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit) {
 }
 
 @Composable
-private fun CategoryRow(icon: String, title: String, subtitle: String, selected: Boolean, onClick: () -> Unit) {
+private fun CategoryRow(icon: ImageVector, title: String, subtitle: String, selected: Boolean, onClick: () -> Unit) {
     val scale by animateFloatAsState(if (selected) 1.015f else 1f, tween(180), label = "categoryScale")
     Surface(
         modifier = Modifier.fillMaxWidth().graphicsLayer { scaleX = scale; scaleY = scale }.clickable(onClick = onClick),
@@ -233,7 +238,7 @@ private fun CategoryRow(icon: String, title: String, subtitle: String, selected:
         tonalElevation = if (selected) 2.dp else 0.dp
     ) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(icon, style = MaterialTheme.typography.titleLarge)
+            Icon(icon, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(title, fontWeight = FontWeight.SemiBold, maxLines = 1)
@@ -244,29 +249,18 @@ private fun CategoryRow(icon: String, title: String, subtitle: String, selected:
     }
 }
 
-private fun categoryMeta(category: ActionCategory): Pair<String, String> = when (category) {
-    ActionCategory.HEALTH -> "❤️" to "Сон, вода и самочувствие"
-    ActionCategory.SPORT -> "🏋️" to "Тренировки и движение"
-    ActionCategory.HABITS -> "🚭" to "Привычки и ограничения"
-    ActionCategory.NUTRITION -> "🥗" to "Питание и режим"
-    ActionCategory.MENTAL -> "🧠" to "Состояние и восстановление"
-    ActionCategory.DEVELOPMENT -> "📚" to "Чтение, речь и обучение"
-    ActionCategory.PRODUCTIVITY -> "💼" to "Фокус и важные дела"
-    ActionCategory.RELATIONSHIPS -> "👥" to "Близкие и общение"
-    ActionCategory.DIGITAL -> "📱" to "Экран и цифровые привычки"
-    ActionCategory.FINANCE -> "💰" to "Бюджет и накопления"
-    ActionCategory.HOME -> "🏠" to "Порядок и бытовые дела"
-}
-
-private fun actionTypeIcon(type: TrackerType): String = when (type) {
-    TrackerType.CHECK -> "✓"
-    TrackerType.COUNTER -> "#"
-    TrackerType.NUMBER -> "№"
-    TrackerType.DURATION -> "⏱"
-    TrackerType.STREAK -> "🔥"
-    TrackerType.SCALE -> "◐"
-    TrackerType.REDUCTION_GOAL -> "↓"
-    TrackerType.INCREASE_GOAL -> "↑"
+private fun categoryMeta(category: ActionCategory): Pair<ImageVector, String> = when (category) {
+    ActionCategory.HEALTH -> PrimeIcons.Health to "Сон, вода и самочувствие"
+    ActionCategory.SPORT -> PrimeIcons.Sport to "Тренировки и движение"
+    ActionCategory.HABITS -> PrimeIcons.Shield to "Привычки и ограничения"
+    ActionCategory.NUTRITION -> PrimeIcons.Health to "Питание и режим"
+    ActionCategory.MENTAL -> PrimeIcons.Health to "Состояние и восстановление"
+    ActionCategory.DEVELOPMENT -> PrimeIcons.Book to "Чтение, речь и обучение"
+    ActionCategory.PRODUCTIVITY -> PrimeIcons.Progress to "Фокус и важные дела"
+    ActionCategory.RELATIONSHIPS -> PrimeIcons.Home to "Близкие и общение"
+    ActionCategory.DIGITAL -> PrimeIcons.Shield to "Экран и цифровые привычки"
+    ActionCategory.FINANCE -> PrimeIcons.Wallet to "Бюджет и накопления"
+    ActionCategory.HOME -> PrimeIcons.Home to "Порядок и бытовые дела"
 }
 
 private fun actionTypeLabel(action: ActionTemplate): String = when (action.type) {

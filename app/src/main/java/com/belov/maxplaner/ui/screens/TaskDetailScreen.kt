@@ -1,5 +1,7 @@
 package com.belov.maxplaner.ui.screens
 
+import com.belov.maxplaner.data.categoryLabel
+
 import com.belov.maxplaner.ui.components.TaskEditorDialog
 import com.belov.maxplaner.ui.components.PlannerCard
 import com.belov.maxplaner.ui.components.PlannerSurface
@@ -58,7 +60,7 @@ internal fun TaskDetailScreen(store: PlannerStore, task: PlannerTask, onBack: ()
                     Text(task.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     Text("$dateText • $timeText", color = MaterialTheme.colorScheme.onPrimaryContainer)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        InfoChip(task.category)
+                        InfoChip(categoryLabel(task.category))
                         InfoChip(priorityLabel(task.priority))
                     }
                     TextButton(onClick = { store.updateTask(task.copy(isFocus = !task.isFocus)) }) {

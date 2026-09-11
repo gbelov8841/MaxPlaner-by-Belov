@@ -1,5 +1,6 @@
 package com.belov.maxplaner.ui
 
+import com.belov.maxplaner.ui.icons.PrimeIcons
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
@@ -61,10 +62,10 @@ import com.belov.maxplaner.ui.theme.AppearanceStore
 private data class Tab(val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
 
 private val tabs = listOf(
-    Tab("today", "Главная", Icons.Rounded.Home),
-    Tab("calendar", "План дня", Icons.Rounded.CalendarMonth),
-    Tab("analytics", "Прогресс", Icons.Rounded.Analytics),
-    Tab("appearance", "Ещё", Icons.Rounded.MoreHoriz)
+    Tab("today", "Главная", PrimeIcons.Home),
+    Tab("calendar", "План дня", PrimeIcons.Calendar),
+    Tab("analytics", "Прогресс", PrimeIcons.Progress),
+    Tab("appearance", "Ещё", PrimeIcons.More)
 )
 
 @Composable

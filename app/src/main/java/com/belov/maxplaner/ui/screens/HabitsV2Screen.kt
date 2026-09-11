@@ -1,5 +1,8 @@
 package com.belov.maxplaner.ui.screens
 
+import com.belov.maxplaner.ui.icons.PrimeIcons
+import androidx.compose.foundation.layout.size
+
 import com.belov.maxplaner.ui.components.TimeSlotFields
 import com.belov.maxplaner.ui.components.EditTimeSlotDialog
 import androidx.compose.foundation.rememberScrollState
@@ -27,7 +30,6 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Circle
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.LocalFireDepartment
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
@@ -84,17 +86,18 @@ fun HabitsV2Screen(store: PlannerStore) {
         verticalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)
     ) {
         item {
-            val todayDone = store.habits.count { LocalDate.now().toString() in it.completedDates }
+            val scheduledToday = store.habits.filter { it.schedule.isScheduled(store.today) }
+            val todayDone = scheduledToday.count { store.today.toString() in it.completedDates }
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Привычки", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold)
                 Text("Гибкий ритм без давления и чувства вины", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 PlannerCard(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
                     Row(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalAlignment = Alignment.CenterVertically) {
-                        Text("🔥", style = MaterialTheme.typography.headlineMedium)
+                        Icon(PrimeIcons.Repeat, null, Modifier.size(28.dp), tint = MaterialTheme.colorScheme.primary)
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
                             Text("Сегодня", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                            Text(if (store.habits.isEmpty()) "Добавь первую привычку" else "$todayDone из ${store.habits.size} отмечено", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(if (store.habits.isEmpty()) "Добавь первую привычку" else if (scheduledToday.isEmpty()) "Сегодня день отдыха" else "$todayDone из ${scheduledToday.size} отмечено", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -111,7 +114,7 @@ fun HabitsV2Screen(store: PlannerStore) {
                     Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding)) {
                         Text("Начни с маленького шага", style = MaterialTheme.typography.titleMedium)
                         Text(
-                            "Выбери удобные дни — MaxPlaner не будет ломать серию в дни отдыха.",
+                            "Выбери удобные дни — PrimePlaner не будет ломать серию в дни отдыха.",
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -212,7 +215,7 @@ private fun HabitScheduleCard(store: PlannerStore, habit: Habit, onEdit: () -> U
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Rounded.LocalFireDepartment, contentDescription = null)
+                Icon(PrimeIcons.Repeat, contentDescription = null)
                 Text(" ${store.streak(habit)} подряд", style = MaterialTheme.typography.bodyMedium)
                 Text(
                     if (scheduledToday) {
