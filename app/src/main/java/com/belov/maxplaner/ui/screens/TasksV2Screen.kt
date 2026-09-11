@@ -153,7 +153,7 @@ fun TasksV2Screen(store: PlannerStore) {
 
 @Composable
 internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit, initialCategory: ActionCategory? = null) {
-    var category by rememberSaveable(initialCategory) { mutableStateOf(initialCategory) }
+    var category by remember(initialCategory) { mutableStateOf(initialCategory) }
     var selectedTitle by rememberSaveable { mutableStateOf<String?>(null) }
     var custom by rememberSaveable { mutableStateOf(false) }
     var showCategories by rememberSaveable { mutableStateOf(false) }
