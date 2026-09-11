@@ -176,7 +176,7 @@ internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit) {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 item { OutlinedTextField(query, { query = it }, label = { Text("Найти действие") }, singleLine = true, shape = tokens.compactShape, modifier = Modifier.fillMaxWidth()) }
                 item {
-                    TextButton(onClick = { showCategories = !showCategories }) { Text(if (showCategories) "Скрыть категории" else "Все категории · 11", maxLines = 1) }
+                    TextButton(onClick = { showCategories = !showCategories }, modifier = Modifier.heightIn(min = 48.dp)) { Text(if (showCategories) "Скрыть категории" else "Все категории · 11") }
                     AnimatedVisibility(
                         visible = showCategories,
                         enter = fadeIn() + expandVertically(),
@@ -230,7 +230,7 @@ internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit) {
             }
         },
         confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Закрыть", maxLines = 1) } }
+        dismissButton = { TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) { Text("Закрыть") } }
     )
 }
 
