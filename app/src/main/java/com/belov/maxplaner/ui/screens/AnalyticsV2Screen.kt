@@ -33,7 +33,7 @@ fun AnalyticsV2Screen(store: PlannerStore, onOpenTasks: () -> Unit = {}, onOpenH
         }
         item {
             PlannerCard(hero = true, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)) {
-                Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), verticalArrangement = Arrangement.spacedBy(if (LocalDensity.current.fontScale > 1.2f) 16.dp else 12.dp)) {
                     Text("Сегодня выполнено", style = MaterialTheme.typography.titleMedium)
                     if (today.total > 0) {
                         Text("${today.done} из ${today.total}", style = MaterialTheme.typography.headlineLarge)
@@ -59,7 +59,7 @@ fun AnalyticsV2Screen(store: PlannerStore, onOpenTasks: () -> Unit = {}, onOpenH
                     Text("Записано ${summary.measurementsRecorded} из ${summary.measurementsPlanned}")
                     Text("Это число записей, а не оценка достижения целей или соблюдения лимитов.", style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    TextButton(onClick = onOpenTasks) { Text("Открыть показатели") }
+                    TextButton(onClick = onOpenTasks, modifier = Modifier.heightIn(min = 48.dp)) { Text("Открыть показатели") }
                 }
             }
         }
