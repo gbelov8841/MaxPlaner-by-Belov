@@ -53,6 +53,23 @@ class PlannerInteractionTest {
             ui.onNodeWithText("Месяц").performClick()
             screenshot("${pack.id}-month")
             ui.onNodeWithText("День").performClick()
+            ui.onNodeWithText("Прогресс").performClick()
+            screenshot("${pack.id}-progress")
+            ui.onNodeWithText("Ещё").performClick()
+            ui.onNodeWithText("Привычки").performClick()
+            screenshot("${pack.id}-habits")
+            ui.onNodeWithContentDescription("Новая привычка").performClick()
+            screenshot("${pack.id}-habit-form")
+            ui.onNodeWithText("Отмена").performClick()
+            ui.onNodeWithText("Ещё").performClick()
+            ui.onNodeWithText("Настройки").performClick()
+            screenshot("${pack.id}-settings")
+            ui.onNodeWithText("Ещё").performClick()
+            ui.onNodeWithText("Дела и каталог действий").performClick()
+            screenshot("${pack.id}-tasks")
+            ui.onNodeWithText("Выбрать готовое").performClick()
+            screenshot("${pack.id}-catalog")
+            ui.onNodeWithText("Закрыть").performClick()
         }
     }
 

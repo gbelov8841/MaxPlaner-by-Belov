@@ -9,7 +9,7 @@ from pathlib import Path
 from PIL import Image
 
 for path in sorted(Path('ui-screenshots').glob('*.png')):
-    if not path.stem.endswith(('-home', '-day')):
+    if not path.stem.endswith(('-home', '-day')) and not path.stem.startswith(('light_glass-', 'dark_future-')):
         continue
     image = Image.open(path).convert('RGB')
     image.thumbnail((480, 1100))

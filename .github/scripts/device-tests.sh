@@ -9,8 +9,8 @@ if [ "$result" -eq 0 ] && [ "$evidence_result" -ne 0 ]; then
 fi
 if [ "$result" -eq 0 ]; then
   count=$(find ui-screenshots -maxdepth 1 -name '*.png' | wc -l)
-  if [ "$count" -lt 20 ]; then
-    echo "Expected all 20 theme/calendar screenshots; found $count"
+  if [ "$count" -lt 50 ]; then
+    echo "Expected all 50 theme/screen screenshots; found $count"
     exit 1
   fi
 fi
