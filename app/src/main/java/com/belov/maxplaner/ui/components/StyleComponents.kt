@@ -92,6 +92,8 @@ fun PlannerCard(
     modifier: Modifier = Modifier,
     hero: Boolean = false,
     selected: Boolean = false,
+    onClick: (() -> Unit)? = null,
+    enabled: Boolean = true,
     shape: Shape = if (hero) LocalStyleTokens.current.heroShape else LocalStyleTokens.current.cardShape,
     colors: CardColors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     content: @Composable ColumnScope.() -> Unit
@@ -106,6 +108,8 @@ fun PlannerCard(
     } else colors
 
     Card(
+        onClick = onClick ?: {},
+        enabled = enabled && onClick != null,
         modifier = modifier,
         shape = shape,
         colors = resolvedColors,
