@@ -67,10 +67,16 @@ fun TrackerCard(store: PlannerStore, tracker: Tracker, date: java.time.LocalDate
     if (edit) {
         val numeric = draft.replace(',', '.').toDoubleOrNull()
         val valid = numeric != null && tracker.accepts(numeric)
-        AlertDialog(onDismissRequest = { edit = false }, title = { Text(tracker.title) }, text = {
+        AlertDialog(
+            onDismissRequest = { edit = false },
+            shape = tokens.heroShape,
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = if (tokens.floatingGlass) .90f else 1f),
+            tonalElevation = tokens.heroElevation,
+            title = { Text(tracker.title) },
+            text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(if (tracker.period.end == null) "С ${tracker.period.start} · повторяется" else "${tracker.period.start} — ${tracker.period.end}")
-                if (active && !check) OutlinedTextField(draft, { draft = it }, label = { Text(if (tracker.unit.isBlank()) "Значение за $date" else "$date, ${tracker.unit}") },
+                if (active && !check) OutlinedTextField(draft, { draft = it }, label = { Text(if (tracker.unit.isBlank()) "Значение за $date" else "$date, ${tracker.unit}") }, shape = tokens.compactShape,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true,
                     isError = draft.isNotBlank() && !valid, supportingText = { Text(if (tracker.type == TrackerType.SCALE) "Целое число от 1 до 5" else "Ноль — тоже запись. Пустое поле удаляет запись.") })
                 val history = tracker.values.toSortedMap(compareByDescending { it }).entries.take(14)
@@ -85,7 +91,9 @@ fun TrackerCard(store: PlannerStore, tracker: Tracker, date: java.time.LocalDate
         }, dismissButton = { TextButton(onClick = { edit = false }) { Text("Закрыть") } })
     }
     if (editTime) EditTimeSlotDialog(tracker.title, tracker.startMinutes, tracker.durationMinutes, { editTime = false }) { start, duration -> store.updateTrackerTime(tracker.id, start, duration) }
-    if (delete) AlertDialog(onDismissRequest = { delete = false }, title = { Text("Удалить действие?") }, text = { Text("«${tracker.title}» и его записи будут удалены.") },
+    if (delete) AlertDialog(onDismissRequest = { delete = false }, shape = tokens.heroShape,
+        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = if (tokens.floatingGlass) .90f else 1f), tonalElevation = tokens.heroElevation,
+        title = { Text("Удалить действие?") }, text = { Text("«${tracker.title}» и его записи будут удалены.") },
         confirmButton = { TextButton(onClick = { store.deleteTracker(tracker.id); delete = false; edit = false }) { Text("Удалить") } },
         dismissButton = { TextButton(onClick = { delete = false }) { Text("Отмена") } })
 }
