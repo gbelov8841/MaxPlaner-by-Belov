@@ -115,9 +115,6 @@ fun TaskEditorDialog(
         shape = tokens.heroShape,
         containerColor = MaterialTheme.colorScheme.surface.copy(alpha = if (tokens.floatingGlass) .90f else 1f),
         tonalElevation = tokens.heroElevation,
-        shape = tokens.heroShape,
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = tokens.heroElevation,
         title = { Text(if (task == null) "Новое дело" else "Изменить дело") },
         text = {
             Column(
