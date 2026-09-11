@@ -334,12 +334,12 @@ private fun PrimeCategoryGrid() {
                 row.forEach { (title, icon, tint) ->
                     Surface(
                         modifier = Modifier.weight(1f).heightIn(min = 108.dp),
-                        shape = tokens.cardShape,
+                        shape = LocalStyleTokens.current.cardShape,
                         color = MaterialTheme.colorScheme.surface,
                         tonalElevation = 1.dp
                     ) {
                         Column(Modifier.padding(vertical = 16.dp, horizontal = 8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Surface(shape = tokens.compactShape, color = tint.copy(alpha = .14f)) {
+                            Surface(shape = LocalStyleTokens.current.compactShape, color = tint.copy(alpha = .14f)) {
                                 Icon(icon, null, tint = tint, modifier = Modifier.padding(10.dp).size(26.dp))
                             }
                             Text(title, style = MaterialTheme.typography.labelMedium, maxLines = 1)
