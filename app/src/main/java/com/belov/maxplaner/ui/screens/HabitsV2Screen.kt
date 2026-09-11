@@ -34,6 +34,7 @@ import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -326,6 +327,7 @@ private fun HabitScheduleDialog(
         confirmButton = {
             TextButton(
                 enabled = valid,
+                colors = ButtonDefaults.textButtonColors(disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = LocalStyleTokens.current.disabledAlpha)),
                 onClick = {
                     val schedule = if (type == HabitScheduleType.DAILY) {
                         HabitSchedule.Daily
