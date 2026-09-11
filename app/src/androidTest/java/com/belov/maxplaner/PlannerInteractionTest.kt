@@ -2,6 +2,7 @@ package com.belov.maxplaner
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.os.ParcelFileDescriptor
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
@@ -27,6 +28,10 @@ class PlannerInteractionTest {
         instrumentation.uiAutomation.takeScreenshot().also { image ->
             file.outputStream().use { image.compress(Bitmap.CompressFormat.PNG, 100, it) }; image.recycle()
         }
+        // connectedAndroidTest removes the app and its external-files directory.
+        // Preserve only our screenshots in the disposable emulator before teardown.
+        val command = "mkdir -p /sdcard/Download/primeplaner-screenshots && cp '${file.absolutePath}' /sdcard/Download/primeplaner-screenshots/$name.png"
+        ParcelFileDescriptor.AutoCloseInputStream(instrumentation.uiAutomation.executeShellCommand(command)).use { it.readBytes() }
     }
 
     @Test fun allThemesNavigateAndCaptureRealScreens() {
