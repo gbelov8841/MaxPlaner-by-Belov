@@ -350,7 +350,7 @@ private fun PrimeCategoryGrid(onCategoryClick: (ActionCategory) -> Unit) {
                             Surface(shape = LocalStyleTokens.current.compactShape, color = tint.copy(alpha = .14f)) {
                                 Icon(icon, null, tint = tint, modifier = Modifier.padding(10.dp).size(26.dp))
                             }
-                            Text(category.title.substringAfter(" "), style = MaterialTheme.typography.labelMedium, maxLines = 1)
+                            Text(category.title.substringAfter(" "), style = MaterialTheme.typography.labelMedium, maxLines = 2)
                         }
                     }
                 }
