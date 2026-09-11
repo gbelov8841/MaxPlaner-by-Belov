@@ -30,8 +30,11 @@ class PlannerInteractionTest {
         }
         // connectedAndroidTest removes the app and its external-files directory.
         // Preserve only our screenshots in the disposable emulator before teardown.
-        val command = "mkdir -p /sdcard/Download/primeplaner-screenshots && cp '${file.absolutePath}' /sdcard/Download/primeplaner-screenshots/$name.png"
-        ParcelFileDescriptor.AutoCloseInputStream(instrumentation.uiAutomation.executeShellCommand(command)).use { it.readBytes() }
+        // UiAutomation executes argv directly; it does not interpret shell operators.
+        listOf("mkdir -p /sdcard/Download/primeplaner-screenshots",
+            "cp ${file.absolutePath} /sdcard/Download/primeplaner-screenshots/$name.png").forEach { command ->
+            ParcelFileDescriptor.AutoCloseInputStream(instrumentation.uiAutomation.executeShellCommand(command)).use { it.readBytes() }
+        }
     }
 
     @Test fun allThemesNavigateAndCaptureRealScreens() {
