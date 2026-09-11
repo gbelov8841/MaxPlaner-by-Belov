@@ -4,6 +4,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -19,6 +21,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -137,12 +140,24 @@ fun PlannerSurface(
     shape: Shape = LocalStyleTokens.current.compactShape,
     color: Color = MaterialTheme.colorScheme.surface,
     selected: Boolean = false,
+    onClick: (() -> Unit)? = null,
+    enabled: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val tokens = LocalStyleTokens.current
-    val resolved = if (tokens.floatingGlass) color.copy(alpha = tokens.surfaceOpacity) else color
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    val baseAlpha = if (tokens.floatingGlass) tokens.surfaceOpacity else 1f
+    val stateAlpha = when { !enabled -> tokens.disabledAlpha; pressed -> (1f - tokens.pressedAlpha); else -> 1f }
+    val resolved = color.copy(alpha = baseAlpha * stateAlpha)
+    val surfaceModifier = if (onClick != null) modifier.clip(shape).background(Color.Transparent).then(
+        Modifier
+    ) else modifier
     Surface(
-        modifier = modifier,
+        modifier = surfaceModifier,
+        onClick = onClick ?: {},
+        enabled = enabled && onClick != null,
+        interactionSource = interactionSource,
         shape = shape,
         color = resolved,
         contentColor = contentColorFor(color),
