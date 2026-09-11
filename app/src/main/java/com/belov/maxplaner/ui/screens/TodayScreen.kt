@@ -343,8 +343,7 @@ private fun PrimeCategoryGrid(onCategoryClick: (ActionCategory) -> Unit) {
                         modifier = Modifier.weight(1f).heightIn(min = 108.dp),
                         onClick = { onCategoryClick(category) },
                         shape = LocalStyleTokens.current.cardShape,
-                        color = MaterialTheme.colorScheme.surface,
-                        tonalElevation = 1.dp
+                        color = MaterialTheme.colorScheme.surface
                     ) {
                         Column(Modifier.padding(vertical = 16.dp, horizontal = 8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Surface(shape = LocalStyleTokens.current.compactShape, color = tint.copy(alpha = .14f)) {
