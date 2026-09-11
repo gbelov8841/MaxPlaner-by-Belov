@@ -33,9 +33,10 @@ import java.util.Locale
 @Composable
 internal fun TaskDetailScreen(store: PlannerStore, task: PlannerTask, onBack: () -> Unit) {
     var showEdit by rememberSaveable { mutableStateOf(false) }
+    var showDelete by rememberSaveable { mutableStateOf(false) }
     var newChecklistItem by rememberSaveable(task.id) { mutableStateOf("") }
     val haptic = LocalHapticFeedback.current
-    BackHandler(enabled = !showEdit, onBack = onBack)
+    BackHandler(enabled = !showEdit && !showDelete, onBack = onBack)
     val done = task.checklist.count { it.completed }
     val progress = if (task.checklist.isEmpty()) 0f else done.toFloat() / task.checklist.size
     val dateText = task.dueDate?.let {
@@ -51,7 +52,8 @@ internal fun TaskDetailScreen(store: PlannerStore, task: PlannerTask, onBack: ()
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack) { Icon(Icons.Rounded.ArrowBack, "Назад") }
-                Text("Детали дела", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                Text("Детали дела", modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                IconButton(onClick = { showDelete = true }) { Icon(Icons.Rounded.Delete, "Удалить дело") }
             }
         }
         item {
@@ -129,6 +131,9 @@ internal fun TaskDetailScreen(store: PlannerStore, task: PlannerTask, onBack: ()
         }
     }
 
+    if (showDelete) AlertDialog(onDismissRequest = { showDelete = false }, title = { Text("Удалить дело?") },
+        text = { Text(task.title) }, confirmButton = { TextButton(onClick = { store.deleteTask(task.id); onBack() }) { Text("Удалить") } },
+        dismissButton = { TextButton(onClick = { showDelete = false }) { Text("Отмена") } })
     if (showEdit) {
         TaskEditorDialog(store = store, task = task, onDismiss = { showEdit = false })
     }

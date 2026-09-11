@@ -76,6 +76,7 @@ import com.belov.maxplaner.ui.theme.LocalStyleTokens
 @Composable
 fun TasksV2Screen(store: PlannerStore) {
     var showCustom by rememberSaveable { mutableStateOf(false) }
+    var deleteId by rememberSaveable { mutableStateOf<String?>(null) }
     var showCatalog by rememberSaveable { mutableStateOf(false) }
 
     var selectedTaskId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -140,7 +141,7 @@ fun TasksV2Screen(store: PlannerStore) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    IconButton(onClick = { store.deleteTask(task.id) }, modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)) {
+                    IconButton(onClick = { deleteId = task.id }, modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)) {
                         Icon(Icons.Rounded.Delete, contentDescription = "Удалить")
                     }
                 }
@@ -148,13 +149,17 @@ fun TasksV2Screen(store: PlannerStore) {
         }
     }
 
+    if (deleteId != null) AlertDialog(onDismissRequest = { deleteId = null }, title = { Text("Удалить дело?") },
+        text = { Text(store.tasks.firstOrNull { it.id == deleteId }?.title.orEmpty()) },
+        confirmButton = { TextButton(onClick = { deleteId?.let(store::deleteTask); deleteId = null }) { Text("Удалить") } },
+        dismissButton = { TextButton(onClick = { deleteId = null }) { Text("Отмена") } })
     if (showCustom) ActionSetupDialog(store, onDismiss = { showCustom = false })
     if (showCatalog) ActionCatalogDialog(store, onDismiss = { showCatalog = false })
 }
 
 @Composable
 internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit, initialCategory: ActionCategory? = null) {
-    var category by remember(initialCategory) { mutableStateOf(initialCategory) }
+    var category by rememberSaveable(initialCategory) { mutableStateOf(initialCategory) }
     var selectedTitle by rememberSaveable { mutableStateOf<String?>(null) }
     var custom by rememberSaveable { mutableStateOf(false) }
     var showCategories by rememberSaveable { mutableStateOf(false) }
@@ -164,13 +169,13 @@ internal fun ActionCatalogDialog(store: PlannerStore, onDismiss: () -> Unit, ini
         ActionSetupDialog(store, onDismiss = onDismiss, template = selected, category = category?.title ?: "Личное")
         return
     }
-    val visible = if (query.isNotBlank()) ActionCatalog.templates.filter { it.title.contains(query.trim(), ignoreCase = true) }
+    val visible = if (query.isNotBlank()) ActionCatalog.templates.filter { it.title.contains(query.trim(), ignoreCase = true) && (category == null || it.category == category) }
         else category?.let { c -> ActionCatalog.templates.filter { it.category == c } } ?: ActionCatalog.popular
     val tokens = LocalStyleTokens.current
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = tokens.heroShape,
-        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = if (tokens.floatingGlass) .90f else 1f),
+        containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = tokens.heroElevation,
         title = { Text(category?.title?.let(::categoryLabel) ?: "Популярное") },
         text = {

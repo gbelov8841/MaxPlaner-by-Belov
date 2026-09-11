@@ -1,5 +1,8 @@
 package com.belov.maxplaner.ui.screens
 
+import androidx.compose.material.icons.rounded.Spa
+import androidx.compose.material.icons.rounded.ChevronRight
+
 import com.belov.maxplaner.ui.icons.PrimeIcons
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
@@ -80,182 +83,62 @@ private val habitDays = listOf(
 @Composable
 fun HabitsV2Screen(store: PlannerStore) {
     var showCreate by rememberSaveable { mutableStateOf(false) }
-    var editingHabitId by rememberSaveable { mutableStateOf<String?>(null) }
-    val editingHabit = editingHabitId?.let { id -> store.habits.firstOrNull { it.id == id } }
-
-    LazyColumn(
-        Modifier.fillMaxSize().padding(horizontal = LocalStyleTokens.current.screenPadding),
-        contentPadding = PaddingValues(vertical = 18.dp),
-        verticalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)
-    ) {
+    var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
+    val selected = store.habits.firstOrNull { it.id == selectedId }
+    if (selected != null) { HabitDetailScreen(store, selected) { selectedId = null }; return }
+    val today = store.today
+    val scheduled = store.habits.filter { it.schedule.isScheduled(today) }
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
-            val scheduledToday = store.habits.filter { it.schedule.isScheduled(store.today) }
-            val todayDone = scheduledToday.count { store.today.toString() in it.completedDates }
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Привычки", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold)
-                Text("Гибкий ритм без давления и чувства вины", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                PlannerCard(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
-                    Row(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(PrimeIcons.Repeat, null, Modifier.size(28.dp), tint = MaterialTheme.colorScheme.primary)
-                        Spacer(Modifier.width(12.dp))
-                        Column(Modifier.weight(1f)) {
-                            Text("Сегодня", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                            Text(if (store.habits.isEmpty()) "Добавь первую привычку" else if (scheduledToday.isEmpty()) "Сегодня день отдыха" else "$todayDone из ${scheduledToday.size} отмечено", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                }
-                Button(onClick = { showCreate = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), shape = LocalStyleTokens.current.pillShape) {
-                    Icon(Icons.Rounded.Add, contentDescription = null)
-                    Text("  Новая привычка", maxLines = 1)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Привычки", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.weight(1f))
+                IconButton(onClick = { showCreate = true }) { Icon(Icons.Rounded.Add, "Новая привычка") }
+            }
+            Text("Сегодня · ${scheduled.count { today.toString() in it.completedDates }} из ${scheduled.size}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (store.habits.isEmpty()) item {
+            PlannerCard(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(14.dp)) {
+                    Text("Начни с маленького шага", style = MaterialTheme.typography.titleMedium)
+                    Text("Выбери привычку и удобные дни. Дни отдыха не прерывают серию.", style = MaterialTheme.typography.bodySmall)
+                    com.belov.maxplaner.ui.components.InlineAdd("Новая привычка") { showCreate = true }
                 }
             }
         }
-
-        if (store.habits.isEmpty()) {
-            item {
-                PlannerCard {
-                    Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding)) {
-                        Text("Начни с маленького шага", style = MaterialTheme.typography.titleMedium)
-                        Text(
-                            "Выбери удобные дни — PrimePlaner не будет ломать серию в дни отдыха.",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+        items(store.habits.sortedBy { !it.schedule.isScheduled(today) }, key = { it.id }) { habit ->
+            PlannerCard(modifier = Modifier.fillMaxWidth(), onClick = { selectedId = habit.id }) {
+                Row(Modifier.padding(end = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    if (habit.schedule.isScheduled(today)) com.belov.maxplaner.ui.components.CompletionButton(today.toString() in habit.completedDates, habit.title) { store.toggleHabitToday(habit.id) }
+                    else Icon(Icons.Rounded.Spa, null, Modifier.padding(14.dp).size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Column(Modifier.weight(1f).padding(vertical = 12.dp)) {
+                        Text(habit.title, style = MaterialTheme.typography.bodyMedium)
+                        Text(if (habit.schedule.isScheduled(today)) "Серия · ${store.streak(habit)}" else "Сегодня отдых", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
+                    Icon(Icons.Rounded.ChevronRight, null, Modifier.size(18.dp))
                 }
             }
-        }
-
-        items(store.habits, key = { it.id }) { habit ->
-            HabitScheduleCard(store, habit, onEdit = { editingHabitId = habit.id })
         }
     }
-
-    if (showCreate) {
-        HabitScheduleDialog(
-            title = "Новая привычка",
-            initialSchedule = HabitSchedule.Daily,
-            allowName = true,
-            onDismiss = { showCreate = false },
-            onSave = { name, schedule, start, duration ->
-                store.addHabit(name, schedule, start, duration)
-                showCreate = false
-            }
-        )
-    }
-
-    if (editingHabit != null) {
-        HabitScheduleDialog(
-            title = editingHabit.title,
-            initialSchedule = editingHabit.schedule,
-            initialStart = editingHabit.startMinutes,
-            initialDuration = editingHabit.durationMinutes,
-            allowName = false,
-            onDismiss = { editingHabitId = null },
-            onSave = { _, schedule, start, duration ->
-                store.updateHabitSchedule(editingHabit.id, schedule)
-                store.updateHabitTime(editingHabit.id, start, duration)
-                editingHabitId = null
-            }
-        )
+    if (showCreate) HabitScheduleDialog("Новая привычка", HabitSchedule.Daily, true, { showCreate = false }) { name, schedule, start, duration ->
+        store.addHabit(name, schedule, start, duration); showCreate = false
     }
 }
 
 @Composable
-private fun HabitScheduleCard(store: PlannerStore, habit: Habit, onEdit: () -> Unit) {
-    var editTime by rememberSaveable(habit.id) { mutableStateOf(false) }
-    val today = LocalDate.now()
-    val todayKey = today.toString()
-    val completed = todayKey in habit.completedDates
-    val scheduledToday = store.isHabitScheduledToday(habit)
-    val rate = store.habitCompletionRate(habit, 7)
-    val haptic = LocalHapticFeedback.current
-    val interaction = if (scheduledToday) {
-        Modifier.toggleable(
-            value = completed,
-            role = Role.Checkbox,
-            onValueChange = {
-                store.toggleHabitToday(habit.id)
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            }
-        )
-    } else Modifier
-
-    PlannerCard(
-        modifier = Modifier.fillMaxWidth().then(interaction),
-        shape = LocalStyleTokens.current.cardShape,
-        selected = completed,
-        colors = CardDefaults.cardColors(
-            containerColor = if (completed) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Column(
-            Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    if (completed) Icons.Rounded.CheckCircle else Icons.Rounded.Circle,
-                    contentDescription = if (scheduledToday) "Отметить привычку" else "Сегодня не запланировано"
-                )
-                Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-                    Text(habit.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Text(scheduleLabel(habit.schedule), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                IconButton(onClick = onEdit, modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)) { Icon(Icons.Rounded.Edit, "Изменить расписание") }
-                IconButton(onClick = { store.deleteHabit(habit.id) }, modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)) { Icon(Icons.Rounded.Delete, "Удалить") }
-            }
-
-            PlannerSurface(
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                shape = LocalStyleTokens.current.compactShape,
-                onClick = { editTime = true },
-                color = MaterialTheme.colorScheme.surface
-            ) {
-                Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Rounded.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    Spacer(Modifier.width(8.dp))
-                    Text(habit.startMinutes?.let { timeRange(it, habit.durationMinutes) } ?: "Назначить время", modifier = Modifier.weight(1f), fontWeight = FontWeight.Medium)
-                    Text("Изменить", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-                }
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(PrimeIcons.Repeat, contentDescription = null)
-                Text(" ${store.streak(habit)} подряд", style = MaterialTheme.typography.bodyMedium)
-                Text(
-                    if (scheduledToday) {
-                        if (completed) " · сегодня выполнено" else " · сегодня по плану"
-                    } else " · сегодня выходной",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                Row(Modifier.fillMaxWidth()) {
-                    Text("Последние 7 дней", style = MaterialTheme.typography.labelMedium, modifier = Modifier.weight(1f))
-                    Text("$rate%", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
-                }
-                PlannerProgressIndicator(progress = { rate / 100f }, modifier = Modifier.fillMaxWidth())
-            }
-        }
-    }
-    if (editTime) EditTimeSlotDialog(habit.title, habit.startMinutes, habit.durationMinutes, { editTime = false }) { start, duration -> store.updateHabitTime(habit.id, start, duration) }
-}
-
-@Composable
-private fun HabitScheduleDialog(
+internal fun HabitScheduleDialog(
     title: String,
     initialSchedule: HabitSchedule,
     allowName: Boolean,
     onDismiss: () -> Unit,
     initialStart: Int? = null,
     initialDuration: Int = 30,
+    initialName: String = "",
     onSave: (String, HabitSchedule, Int?, Int) -> Unit
 ) {
     var slotStart by rememberSaveable { mutableStateOf(initialStart) }
     var slotDuration by rememberSaveable { mutableStateOf(initialDuration.toString()) }
     val parsedDuration = slotDuration.toIntOrNull()
-    var name by remember { mutableStateOf(if (allowName) "" else title) }
+    var name by rememberSaveable { mutableStateOf(if (allowName) initialName else title) }
     var type by remember { mutableStateOf(initialSchedule.type) }
     var selectedDays by remember { mutableStateOf(initialSchedule.weekdays) }
     val valid = (slotStart == null || parsedDuration != null && parsedDuration in 15..720) && name.isNotBlank() && (type == HabitScheduleType.DAILY || selectedDays.isNotEmpty())
@@ -263,7 +146,7 @@ private fun HabitScheduleDialog(
 
     AlertDialog(
         shape = tokens.heroShape,
-        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = if (tokens.floatingGlass) .90f else 1f),
+        containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = tokens.heroElevation,
         onDismissRequest = onDismiss,
         title = { Text(if (allowName) title else "Расписание · $title") },

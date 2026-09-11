@@ -2,111 +2,95 @@ package com.belov.maxplaner.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.belov.maxplaner.data.*
-import com.belov.maxplaner.ui.components.PlannerCard
-import com.belov.maxplaner.ui.components.PlannerProgressIndicator
-import com.belov.maxplaner.ui.theme.LocalStyleTokens
-import kotlin.math.roundToInt
+import com.belov.maxplaner.ui.components.*
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun AnalyticsV2Screen(store: PlannerStore, onOpenTasks: () -> Unit = {}, onOpenHabits: () -> Unit = {}, onAdd: () -> Unit = {}) {
-    val summary = progressOverview(store.tasks, store.habits, store.trackers, store.today)
-    val today = summary.today
-    val tokens = LocalStyleTokens.current
-    val bestStreak = store.habits.maxOfOrNull { bestScheduledHabitStreak(it.completedDates, it.schedule) } ?: 0
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = tokens.screenPadding, vertical = tokens.sectionSpacing),
-        verticalArrangement = Arrangement.spacedBy(tokens.sectionSpacing)
-    ) {
+    var days by rememberSaveable { mutableStateOf(7) }
+    var detailDay by rememberSaveable { mutableStateOf<String?>(null) }
+    var category by rememberSaveable { mutableStateOf<String?>(null) }
+    val today = store.today
+    val current = periodProgress(store.completionHistory, store.habits, store.focusByDay, today, days)
+    val previous = periodProgress(store.completionHistory, store.habits, store.focusByDay, today.minusDays(days.toLong()), days)
+    val daily = progressOverview(store.tasks, store.habits, store.trackers, today).today
+    val dates = (days - 1 downTo 0).map { today.minusDays(it.toLong()) }
+    val maxDaily = dates.maxOf { d -> periodProgress(store.completionHistory, store.habits, store.focusByDay, d, 1).let { it.taskCount + it.habitCount } }.coerceAtLeast(1)
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Прогресс", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold)
-                Text("Полезные цифры без давления", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Прогресс", style = MaterialTheme.typography.headlineLarge)
+            Text("Результаты и история", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(days == 7, { days = 7 }, label = { Text("7 дней") })
+                FilterChip(days == 30, { days = 30 }, label = { Text("30 дней") })
             }
         }
         item {
-            PlannerCard(hero = true, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)) {
-                Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), verticalArrangement = Arrangement.spacedBy(if (LocalDensity.current.fontScale > 1.2f) 16.dp else 12.dp)) {
-                    Text("Сегодня выполнено", style = MaterialTheme.typography.titleMedium)
-                    if (today.total > 0) {
-                        Text("${today.done} из ${today.total}", style = MaterialTheme.typography.headlineLarge)
-                        Text("${(today.fraction * 100).roundToInt()}% плана дня", color = MaterialTheme.colorScheme.onTertiaryContainer)
-                        PlannerProgressIndicator(progress = { today.fraction }, modifier = Modifier.fillMaxWidth())
-                        Text(if (today.done == today.total) "Всё запланированное выполнено" else "Каждое выполненное дело приближает к цели", style = MaterialTheme.typography.bodyMedium)
-                    } else {
-                        Text("На сегодня нет запланированных дел", style = MaterialTheme.typography.titleLarge)
-                        Text("Добавь одно дело — здесь появится его результат.", style = MaterialTheme.typography.bodyMedium)
-                        TextButton(onClick = onAdd, modifier = Modifier.heightIn(min = 48.dp)) { Text("Добавить дело") }
+            PlannerCard(modifier = Modifier.fillMaxWidth()) {
+                PanelHeading("Сегодня", "Открыть дела", onOpenTasks)
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(if (daily.total == 0) "Пока нет плана" else "${daily.done} из ${daily.total} выполнено", style = MaterialTheme.typography.titleLarge)
+                    if (daily.total > 0) PlannerProgressIndicator({ daily.fraction }, Modifier.fillMaxWidth()) else InlineAdd("Добавить дело", onAdd)
+                }
+            }
+        }
+        item {
+            PlannerCard(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("За последние $days дней", style = MaterialTheme.typography.titleMedium)
+                    Text("Завершено задач: ${current.taskCount}")
+                    Text("Отметок привычек: ${current.habitCount}")
+                    Text("Фокус: ${current.focusMinutes} мин")
+                    Text("Предыдущие $days дней: ${previous.taskCount} задач · ${previous.habitCount} отметок · ${previous.focusMinutes} мин", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(if (current.taskCount + current.habitCount > previous.taskCount + previous.habitCount)
+                        "Отметок больше, чем в предыдущем периоде." else if (current.taskCount + current.habitCount == 0)
+                        "История появится после первых выполнений." else "Открой день ниже, чтобы посмотреть, что было сделано.", style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+        item { Text("По дням", style = MaterialTheme.typography.titleMedium) }
+        items(dates.reversed(), key = { it.toString() }) { date ->
+            val summary = periodProgress(store.completionHistory, store.habits, store.focusByDay, date, 1)
+            PlannerSurface(modifier = Modifier.fillMaxWidth(), onClick = { detailDay = date.toString() }) {
+                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(date.format(DateTimeFormatter.ofPattern("dd.MM")), Modifier.weight(1f), style = MaterialTheme.typography.labelLarge)
+                        Text("${summary.taskCount} задач · ${summary.habitCount} привычек · ${summary.focusMinutes} мин", style = MaterialTheme.typography.labelSmall)
                     }
+                    PlannerProgressIndicator({ (summary.taskCount + summary.habitCount).toFloat() / maxDaily }, Modifier.fillMaxWidth())
                 }
             }
         }
-        if (today.total > 0 || summary.measurementsPlanned > 0) item { Text("Ключевые показатели", style = MaterialTheme.typography.titleLarge) }
-        if (summary.tasks.total > 0) item { ProgressSummaryCard("Дела сегодня", summary.tasks, "Открыть дела", onOpenTasks) }
-        if (summary.habits.total > 0) item { ProgressSummaryCard("Привычки сегодня", summary.habits, "Открыть привычки", onOpenHabits) }
-        if (summary.actions.total > 0) item { ProgressSummaryCard("Полезные действия сегодня", summary.actions, "Открыть действия", onOpenTasks) }
-        if (summary.measurementsPlanned > 0) item {
-            PlannerCard {
-                Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Мои показатели", style = MaterialTheme.typography.titleLarge)
-                    Text("Записано ${summary.measurementsRecorded} из ${summary.measurementsPlanned}")
-                    Text("Это число записей, а не оценка достижения целей или соблюдения лимитов.", style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    TextButton(onClick = onOpenTasks, modifier = Modifier.heightIn(min = 48.dp)) { Text("Открыть показатели") }
-                }
+        if (current.categories.isNotEmpty()) item { Text("Категории завершённых задач", style = MaterialTheme.typography.titleMedium) }
+        items(current.categories.entries.toList(), key = { it.key }) { entry ->
+            PlannerSurface(modifier = Modifier.fillMaxWidth(), onClick = { category = entry.key }) {
+                Row(Modifier.padding(14.dp)) { Text(categoryLabel(entry.key), Modifier.weight(1f)); Text(entry.value.toString()) }
             }
         }
-        if (store.focusMinutes > 0 || bestStreak > 0) item {
-            BoxWithConstraints(Modifier.fillMaxWidth()) {
-                val stack = maxWidth < 360.dp || LocalDensity.current.fontScale > 1.2f
-                if (stack) Column(verticalArrangement = Arrangement.spacedBy(tokens.sectionSpacing)) {
-                    if (store.focusMinutes > 0) MetricCard(store.focusMinutes.toString(), "Минут фокуса за всё время")
-                    if (bestStreak > 0) MetricCard(bestStreak.toString(), "Лучшая серия привычки за всё время")
-                } else Row(horizontalArrangement = Arrangement.spacedBy(tokens.sectionSpacing)) {
-                    if (store.focusMinutes > 0) MetricCard(store.focusMinutes.toString(), "Минут фокуса за всё время", Modifier.weight(1f))
-                    if (bestStreak > 0) MetricCard(bestStreak.toString(), "Лучшая серия привычки за всё время", Modifier.weight(1f))
-                }
-            }
-        }
-        if (summary.weeklyRhythm.total > 0) item {
-            PlannerCard {
-                Column(Modifier.fillMaxWidth().padding(tokens.cardPadding), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Ритм · последние 7 дней", style = MaterialTheme.typography.titleLarge)
-                    Text("${summary.weeklyRhythm.done} из ${summary.weeklyRhythm.total} запланированных повторений выполнено")
-                    PlannerProgressIndicator(progress = { summary.weeklyRhythm.fraction }, modifier = Modifier.fillMaxWidth())
-                    Text("Привычки и повторяющиеся действия по текущему расписанию, включая сегодня. Измерения и лимиты считаются отдельно.",
-                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-        }
+        item { TextButton(onClick = onOpenHabits, modifier = Modifier.fillMaxWidth()) { Text("Серии и история привычек") } }
+        item { Text("История задач и фокуса записывается с этого обновления. Старые итоги сохранены, но их точные даты неизвестны. Отметки привычек учитываются по сохранённым датам.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        if (store.focusMinutes > 0) item { Text("Фокус за всё время: ${store.focusMinutes} мин", style = MaterialTheme.typography.bodySmall) }
     }
-}
-
-@Composable
-private fun ProgressSummaryCard(title: String, summary: CompletionSummary, action: String, onOpen: () -> Unit) {
-    PlannerCard {
-        Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-            Text("${summary.done} из ${summary.total} выполнено", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            PlannerProgressIndicator(progress = { summary.fraction }, modifier = Modifier.fillMaxWidth())
-            TextButton(onClick = onOpen, modifier = Modifier.heightIn(min = 48.dp)) { Text(action) }
-        }
-    }
-}
-
-@Composable
-private fun MetricCard(value: String, label: String, modifier: Modifier = Modifier) {
-    PlannerCard(modifier = modifier) {
-        Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(value, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
-            Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
+    if (detailDay != null || category != null) {
+        val start = today.minusDays(days.toLong() - 1).toString()
+        val records = store.completionHistory.filter { if (detailDay != null) it.date == detailDay else it.category == category && it.date >= start && it.date <= today.toString() }
+        AlertDialog(onDismissRequest = { detailDay = null; category = null }, title = { Text(detailDay ?: categoryLabel(category.orEmpty())) },
+            text = { LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (records.isEmpty()) item { Text("Завершённых задач нет") }
+                items(records, key = { it.taskId }) { Text(it.title) }
+                if (detailDay != null) {
+                    items(store.habits.filter { detailDay.orEmpty() in it.completedDates }, key = { "habit-${it.id}" }) { Text("Привычка · ${it.title}") }
+                    item { Text("Фокус: ${store.focusByDay[detailDay.orEmpty()] ?: 0} мин") }
+                }
+            } }, confirmButton = { TextButton(onClick = { detailDay = null; category = null }) { Text("Закрыть") } })
     }
 }

@@ -70,7 +70,7 @@ fun TrackerCard(store: PlannerStore, tracker: Tracker, date: java.time.LocalDate
         AlertDialog(
             onDismissRequest = { edit = false },
             shape = tokens.heroShape,
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = if (tokens.floatingGlass) .90f else 1f),
+            containerColor = MaterialTheme.colorScheme.surface,
             tonalElevation = tokens.heroElevation,
             title = { Text(tracker.title) },
             text = {
@@ -92,7 +92,7 @@ fun TrackerCard(store: PlannerStore, tracker: Tracker, date: java.time.LocalDate
     }
     if (editTime) EditTimeSlotDialog(tracker.title, tracker.startMinutes, tracker.durationMinutes, { editTime = false }) { start, duration -> store.updateTrackerTime(tracker.id, start, duration) }
     if (delete) AlertDialog(onDismissRequest = { delete = false }, shape = tokens.heroShape,
-        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = if (tokens.floatingGlass) .90f else 1f), tonalElevation = tokens.heroElevation,
+        containerColor = MaterialTheme.colorScheme.surface, tonalElevation = tokens.heroElevation,
         title = { Text("Удалить действие?") }, text = { Text("«${tracker.title}» и его записи будут удалены.") },
         confirmButton = { TextButton(onClick = { store.deleteTracker(tracker.id); delete = false; edit = false }) { Text("Удалить") } },
         dismissButton = { TextButton(onClick = { delete = false }) { Text("Отмена") } })
