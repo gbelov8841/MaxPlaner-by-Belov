@@ -77,11 +77,11 @@ fun TodayScreen(store: PlannerStore) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text("PrimePlaner", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, color = Color(0xFFE8C56A))
+                        Text("PrimePlaner", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                         Text("by Belov", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Surface(shape = RoundedCornerShape(14.dp), color = Color(0xFF13283A)) {
-                        Icon(Icons.Rounded.NotificationsNone, contentDescription = "Уведомления", tint = Color(0xFF9EB5C6), modifier = Modifier.padding(10.dp).size(22.dp))
+                    Surface(shape = tokens.compactShape, color = MaterialTheme.colorScheme.surfaceVariant) {
+                        Icon(Icons.Rounded.NotificationsNone, contentDescription = "Уведомления", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(10.dp).size(22.dp))
                     }
                 }
                 Spacer(Modifier.height(4.dp))
@@ -97,7 +97,7 @@ fun TodayScreen(store: PlannerStore) {
             WeekStrip(store.today)
         }
         item {
-            PlannerCard(hero = true, colors = CardDefaults.cardColors(containerColor = Color(0xFF102437))) {
+            PlannerCard(hero = true) {
                 Row(
                     Modifier.fillMaxWidth().padding(tokens.cardPadding),
                     verticalAlignment = Alignment.CenterVertically,
