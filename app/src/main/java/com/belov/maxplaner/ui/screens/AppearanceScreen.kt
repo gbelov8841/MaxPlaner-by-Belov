@@ -33,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -130,7 +131,14 @@ private fun CurrentStylePreview(appearance: AppearanceStore) {
         Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)) {
             Text("PrimePlaner by Belov", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
             Text(appearance.style.name, color = MaterialTheme.colorScheme.onPrimaryContainer)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (LocalDensity.current.fontScale > 1.2f) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                PlannerSurface(shape = LocalStyleTokens.current.compactShape, color = MaterialTheme.colorScheme.primary) {
+                    Text("Сегодня", modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp), color = MaterialTheme.colorScheme.onPrimary)
+                }
+                PlannerSurface(shape = LocalStyleTokens.current.compactShape, color = MaterialTheme.colorScheme.surface) {
+                    Text("6 из 8 задач", modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp))
+                }
+            } else Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 PlannerSurface(shape = LocalStyleTokens.current.compactShape, color = MaterialTheme.colorScheme.primary) {
                     Text("Сегодня", modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp), color = MaterialTheme.colorScheme.onPrimary)
                 }
