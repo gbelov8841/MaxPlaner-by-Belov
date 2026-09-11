@@ -27,6 +27,8 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -40,11 +42,16 @@ import com.belov.maxplaner.ui.theme.MaxPlanerStyles
 import com.belov.maxplaner.ui.theme.PaletteOption
 
 @Composable
-fun AppearanceScreen(appearance: AppearanceStore) {
+fun AppearanceScreen(appearance: AppearanceStore, onOpenTasks: () -> Unit = {}, onOpenHabits: () -> Unit = {}) {
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 18.dp, vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
+        item {
+            Text("Ещё", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold)
+            TextButton(onClick = onOpenTasks, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("Все мои дела и показатели") }
+            TextButton(onClick = onOpenHabits, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("Мои привычки") }
+        }
         item {
             Text("Оформление", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold)
             Text(
@@ -105,7 +112,7 @@ fun AppearanceScreen(appearance: AppearanceStore) {
 
         item {
             Text(
-                "Выбор сохраняется на этом устройстве и применяется ко всем экранам MaxPlaner.",
+                "Выбор сохраняется на этом устройстве и применяется ко всем экранам PrimePlaner.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -121,7 +128,7 @@ private fun CurrentStylePreview(appearance: AppearanceStore) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
         Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)) {
-            Text("MaxPlaner", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+            Text("PrimePlaner by Belov", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
             Text(appearance.style.name, color = MaterialTheme.colorScheme.onPrimaryContainer)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 PlannerSurface(shape = LocalStyleTokens.current.compactShape, color = MaterialTheme.colorScheme.primary) {

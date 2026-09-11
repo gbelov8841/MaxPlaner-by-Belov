@@ -172,8 +172,8 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
                 composable("calendar") { CalendarScreen(store) }
                 composable("tasks") { TasksV2Screen(store) }
                 composable("habits") { HabitsV2Screen(store) }
-                composable("analytics") { AnalyticsV2Screen(store) }
-                composable("appearance") { AppearanceScreen(appearance) }
+                composable("analytics") { AnalyticsV2Screen(store, onOpenTasks = { navController.navigate("tasks") { launchSingleTop = true } }, onOpenHabits = { navController.navigate("habits") { launchSingleTop = true } }, onAdd = { showQuickAdd = true }) }
+                composable("appearance") { AppearanceScreen(appearance, onOpenTasks = { navController.navigate("tasks") { launchSingleTop = true } }, onOpenHabits = { navController.navigate("habits") { launchSingleTop = true } }) }
             }
         }
     }
