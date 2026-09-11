@@ -54,10 +54,11 @@ private fun blend(base: Color, tint: Color, amount: Float): Color = Color(
 fun MaxPlanerTheme(appearance: AppearanceStore, content: @Composable () -> Unit) {
     val palette = appearance.palette
     val tokens = remember(appearance.styleId) { styleTokensFor(appearance.styleId) }
+    val typography = if (appearance.styleId == "executive_glass") FloatingGlassTypography else MaxPlanerTypography
     CompositionLocalProvider(LocalStyleTokens provides tokens) {
         MaterialTheme(
             colorScheme = if (palette.isDark) darkScheme(palette) else lightScheme(palette),
-            typography = MaxPlanerTypography,
+            typography = typography,
             shapes = tokens.shapes,
             content = content
         )
