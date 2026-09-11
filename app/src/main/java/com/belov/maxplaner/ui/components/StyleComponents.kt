@@ -103,7 +103,10 @@ fun PlannerCard(
         CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface.copy(
                 alpha = if (hero) (tokens.surfaceOpacity + .08f).coerceAtMost(.92f) else tokens.surfaceOpacity
-            )
+            ),
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = tokens.surfaceOpacity * tokens.disabledAlpha),
+            disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = tokens.disabledAlpha)
         )
     } else colors
 
@@ -164,7 +167,7 @@ fun PlannerSurface(
         interactionSource = interactionSource,
         shape = shape,
         color = resolved,
-        contentColor = contentColorFor(color),
+        contentColor = MaterialTheme.colorScheme.onSurface,
         border = styleBorder(selected),
         tonalElevation = if (tokens.floatingGlass) tokens.cardElevation else androidx.compose.ui.unit.Dp.Unspecified,
         content = content
