@@ -455,10 +455,20 @@ fun AnalyticsScreen(store: PlannerStore) {
 
     LazyColumn(
         Modifier.fillMaxSize().padding(horizontal = LocalStyleTokens.current.screenPadding),
-        contentPadding = PaddingValues(vertical = 18.dp),
+        contentPadding = PaddingValues(top = 20.dp, bottom = 112.dp),
         verticalArrangement = Arrangement.spacedBy(LocalStyleTokens.current.sectionSpacing)
     ) {
-        item { Header("Прогресс", "Только полезные цифры, без визуального шума") }
+        item { Header("Прогресс", "Результаты, которые действительно имеют значение") }
+        item {
+            PlannerCard(shape = LocalStyleTokens.current.heroShape) {
+                Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Сегодня", style = MaterialTheme.typography.labelLarge, color = Color(0xFFE8C56A))
+                    Text("${(taskProgress * 100).toInt()}%", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold, color = Color(0xFFF1F5F3))
+                    Text("выполнено по задачам", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF9FB0BD))
+                    PlannerProgressIndicator(progress = { taskProgress }, modifier = Modifier.fillMaxWidth())
+                }
+            }
+        }
         item { ProgressCard("Задачи", "$completed из $total выполнено", taskProgress) }
         item { ProgressCard("Привычки сегодня", "${(habitProgress * 100).toInt()}% выполнено", habitProgress) }
         item {
@@ -473,8 +483,8 @@ fun AnalyticsScreen(store: PlannerStore) {
 @Composable
 private fun Header(title: String, subtitle: String) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(title, style = MaterialTheme.typography.headlineLarge)
-        Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(title, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, color = Color(0xFFE8C56A))
+        Text(subtitle, color = Color(0xFF8FA3B3))
     }
 }
 
@@ -482,8 +492,8 @@ private fun Header(title: String, subtitle: String) {
 private fun ProgressCard(title: String, subtitle: String, progress: Float) {
     PlannerCard(shape = LocalStyleTokens.current.cardShape) {
         Column(Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(title, style = MaterialTheme.typography.titleLarge)
-            Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = Color(0xFFF1F5F3))
+            Text(subtitle, color = Color(0xFF9FB0BD))
             PlannerProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
         }
     }
@@ -493,8 +503,8 @@ private fun ProgressCard(title: String, subtitle: String, progress: Float) {
 private fun StatCard(value: String, label: String, modifier: Modifier = Modifier) {
     PlannerCard(modifier, shape = LocalStyleTokens.current.cardShape) {
         Column(Modifier.padding(LocalStyleTokens.current.cardPadding)) {
-            Text(value, style = MaterialTheme.typography.headlineMedium)
-            Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(value, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Color(0xFFE8C56A))
+            Text(label, color = Color(0xFF9FB0BD))
         }
     }
 }
