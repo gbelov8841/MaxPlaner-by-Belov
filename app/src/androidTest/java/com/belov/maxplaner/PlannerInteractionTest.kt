@@ -45,7 +45,9 @@ class PlannerInteractionTest {
         ThemePacks.forEach { pack ->
             ui.onNodeWithText("Ещё").performClick()
             ui.onNodeWithText("Оформление").performClick()
-            ui.onNodeWithText(pack.name).performScrollTo().performClick()
+            // Lazy lists do not compose off-screen themes on compact displays.
+            ui.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(pack.name))
+            ui.onNodeWithText(pack.name).performClick()
             ui.onNodeWithText("Главная").performClick()
             ui.onNodeWithText("План на сегодня").assertIsDisplayed()
             screenshot("${pack.id}-home")
