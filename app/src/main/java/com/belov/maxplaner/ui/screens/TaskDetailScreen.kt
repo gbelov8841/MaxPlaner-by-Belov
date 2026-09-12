@@ -1,5 +1,7 @@
 package com.belov.maxplaner.ui.screens
 
+import com.belov.maxplaner.ui.components.LocalTaskCompletion
+
 import com.belov.maxplaner.data.categoryLabel
 
 import com.belov.maxplaner.ui.components.TaskEditorDialog
@@ -32,6 +34,7 @@ import java.util.Locale
 
 @Composable
 internal fun TaskDetailScreen(store: PlannerStore, task: PlannerTask, onBack: () -> Unit) {
+    val toggleTask = LocalTaskCompletion.current
     var showEdit by rememberSaveable { mutableStateOf(false) }
     var showDelete by rememberSaveable { mutableStateOf(false) }
     var newChecklistItem by rememberSaveable(task.id) { mutableStateOf("") }
@@ -121,7 +124,7 @@ internal fun TaskDetailScreen(store: PlannerStore, task: PlannerTask, onBack: ()
                     Text("Изменить", maxLines = 1)
                 }
                 Button(onClick = {
-                    store.toggleTask(task.id)
+                    toggleTask(task.id)
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 }, modifier = Modifier.weight(1f)) {
                     Icon(Icons.Rounded.CheckCircle, null)

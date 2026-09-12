@@ -331,7 +331,7 @@ private fun TimeBlock(task: PlannerTask, onToggle: () -> Unit) {
     }
     PlannerSurface(shape = LocalStyleTokens.current.compactShape, color = container) {
         Row(Modifier.fillMaxWidth().padding(6.dp), verticalAlignment = Alignment.CenterVertically) {
-            CompletionButton(task.completed, task.title, onToggle)
+            CompletionButton(task.completed, task.title, onToggle = onToggle)
             Column(Modifier.weight(1f).padding(vertical = 5.dp)) {
                 Text(task.title, fontWeight = FontWeight.SemiBold, textDecoration = if (task.completed) TextDecoration.LineThrough else null)
                 Text(time, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -343,7 +343,7 @@ private fun TimeBlock(task: PlannerTask, onToggle: () -> Unit) {
 @Composable
 private fun CalendarTaskRow(task: PlannerTask, onToggle: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        CompletionButton(task.completed, task.title, onToggle)
+        CompletionButton(task.completed, task.title, onToggle = onToggle)
         Column(Modifier.weight(1f)) {
             Text(task.title, textDecoration = if (task.completed) TextDecoration.LineThrough else null)
             task.startMinutes?.let { start ->

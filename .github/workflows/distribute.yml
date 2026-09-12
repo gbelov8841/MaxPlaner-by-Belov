@@ -1,0 +1,40 @@
+name: Signed Samsung APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  signed-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require permanent owner signing key
+        env:
+          SIGNING_BUNDLE: ${{ secrets.PRIMEPLANER_SIGNING_BUNDLE }}
+        run: |
+          if [ -z "$SIGNING_BUNDLE" ]; then
+            echo 'Set the repository secret PRIMEPLANER_SIGNING_BUNDLE first.'
+            exit 1
+          fi
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: Test and build
+        run: gradle :app:testDebugUnitTest :app:assembleDebug
+      - name: Sign and verify pinned certificate
+        env:
+          PRIMEPLANER_SIGNING_BUNDLE: ${{ secrets.PRIMEPLANER_SIGNING_BUNDLE }}
+        run: python3 .github/scripts/sign-apk.py
+      - name: Upload signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: PrimePlaner-Samsung
+          path: distribution/*
+          if-no-files-found: error

@@ -47,7 +47,7 @@ fun styleTokensFor(styleId: String): StyleTokens {
         cardElevation = pack.surfaces.elevation, heroElevation = pack.surfaces.elevation,
         borderWidth = .5.dp, borderAlpha = pack.surfaces.borderAlpha, accentBorders = false,
         heroHighlightAlpha = .025f, insetSurfaceAlpha = .9f, cardPadding = 14.dp,
-        screenPadding = 20.dp, sectionSpacing = 12.dp, progressHeight = pack.progressHeight,
+        screenPadding = 16.dp, sectionSpacing = 12.dp, progressHeight = pack.progressHeight,
         motionDurationMillis = 160, navigationElevation = 0.dp, floatingGlass = true,
         surfaceOpacity = pack.surfaces.opacity, pressedAlpha = pack.states.pressedAlpha,
         disabledAlpha = pack.states.disabledAlpha

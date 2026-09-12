@@ -1,5 +1,9 @@
 package com.belov.maxplaner.ui.screens
 
+import com.belov.maxplaner.ui.components.LocalTaskCompletion
+import com.belov.maxplaner.ui.components.TaskQuickActions
+import androidx.compose.foundation.combinedClickable
+
 import androidx.compose.runtime.remember
 import com.belov.maxplaner.ui.icons.PrimeIcons
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -75,6 +79,8 @@ import com.belov.maxplaner.ui.theme.LocalStyleTokens
 
 @Composable
 fun TasksV2Screen(store: PlannerStore) {
+    val toggleTask = LocalTaskCompletion.current
+    var quickTaskId by rememberSaveable { mutableStateOf<String?>(null) }
     var showCustom by rememberSaveable { mutableStateOf(false) }
     var deleteId by rememberSaveable { mutableStateOf<String?>(null) }
     var showCatalog by rememberSaveable { mutableStateOf(false) }
@@ -123,12 +129,12 @@ fun TasksV2Screen(store: PlannerStore) {
         }
         val sorted = store.tasks.sortedWith(compareBy({ it.completed }, { -it.priority }))
         items(sorted, key = { it.id }) { task ->
-            PlannerCard(modifier = Modifier.fillMaxWidth(), onClick = { selectedTaskId = task.id }) {
+            PlannerCard(modifier = Modifier.fillMaxWidth().combinedClickable(onClick = { selectedTaskId = task.id }, onLongClick = { quickTaskId = task.id })) {
                 Row(
                     Modifier.fillMaxWidth().padding(LocalStyleTokens.current.cardPadding),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    CompletionButton(task.completed, task.title) { store.toggleTask(task.id) }
+                    CompletionButton(task.completed, task.title) { toggleTask(task.id) }
                     Column(Modifier.weight(1f).padding(vertical = if (LocalDensity.current.fontScale > 1.2f) 4.dp else 0.dp), verticalArrangement = Arrangement.spacedBy(if (LocalDensity.current.fontScale > 1.2f) 6.dp else 3.dp)) {
                         Text(
                             task.title,
@@ -149,6 +155,8 @@ fun TasksV2Screen(store: PlannerStore) {
         }
     }
 
+    val quickTask = store.tasks.firstOrNull { it.id == quickTaskId }
+    if (quickTask != null) TaskQuickActions(store, quickTask, { quickTaskId = null }) { selectedTaskId = quickTask.id }
     if (deleteId != null) AlertDialog(onDismissRequest = { deleteId = null }, title = { Text("Удалить дело?") },
         text = { Text(store.tasks.firstOrNull { it.id == deleteId }?.title.orEmpty()) },
         confirmButton = { TextButton(onClick = { deleteId?.let(store::deleteTask); deleteId = null }) { Text("Удалить") } },

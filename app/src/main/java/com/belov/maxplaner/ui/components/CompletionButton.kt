@@ -22,7 +22,7 @@ import com.belov.maxplaner.ui.theme.LocalStyleTokens
 
 /** Native checked semantics, a full touch target and feedback only on a user action. */
 @Composable
-fun CompletionButton(completed: Boolean, title: String, onToggle: () -> Unit) {
+fun CompletionButton(completed: Boolean, title: String, enabled: Boolean = true, onToggle: () -> Unit) {
     val haptic = LocalHapticFeedback.current
     val tint by animateColorAsState(
         targetValue = if (completed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -31,6 +31,7 @@ fun CompletionButton(completed: Boolean, title: String, onToggle: () -> Unit) {
     )
     IconToggleButton(
         checked = completed,
+        enabled = enabled,
         onCheckedChange = {
             onToggle()
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -43,7 +44,7 @@ fun CompletionButton(completed: Boolean, title: String, onToggle: () -> Unit) {
         Icon(
             if (completed) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked,
             contentDescription = null,
-            tint = tint
+            tint = if (enabled) tint else tint.copy(alpha = LocalStyleTokens.current.disabledAlpha)
         )
     }
 }

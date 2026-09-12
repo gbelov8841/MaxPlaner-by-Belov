@@ -27,6 +27,14 @@ class PlannerInteractionTest {
         // Allow the actual window transition to settle before taking device pixels.
         instrumentation.waitForIdleSync()
         android.os.SystemClock.sleep(350)
+        // Accessibility focus is briefly absent after a dialog is dismissed.
+        var activePackage: String? = null
+        ui.waitUntil(timeoutMillis = 5_000) {
+            activePackage = instrumentation.uiAutomation.rootInActiveWindow?.packageName?.toString()
+            activePackage != null
+        }
+        assertEquals("Screenshot must not be covered by a system dialog",
+            instrumentation.targetContext.packageName, activePackage)
         val file = File(instrumentation.targetContext.getExternalFilesDir(null), "screenshots/$name.png")
         file.parentFile!!.mkdirs()
         instrumentation.uiAutomation.takeScreenshot().also { image ->
@@ -45,7 +53,9 @@ class PlannerInteractionTest {
         ThemePacks.forEach { pack ->
             ui.onNodeWithText("Ещё").performClick()
             ui.onNodeWithText("Оформление").performClick()
-            ui.onNodeWithText(pack.name).performScrollTo().performClick()
+            // Lazy lists do not compose off-screen themes on compact displays.
+            ui.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(pack.name))
+            ui.onNodeWithText(pack.name).performClick()
             ui.onNodeWithText("Главная").performClick()
             ui.onNodeWithText("План на сегодня").assertIsDisplayed()
             screenshot("${pack.id}-home")
@@ -103,6 +113,31 @@ class PlannerInteractionTest {
         ui.onNodeWithText("Отмена").performClick()
         assertTrue(PlannerStore(context).tasks.any { it.id == task.id })
         screenshot("task-detail")
+    }
+
+    @Test fun weekFitsUndoAndQuickMovePreserveTask() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val today = LocalDate.now()
+        val original = PlannerStore(context).tasks.first { it.dueDate == today.toString() }
+        ui.onNodeWithText("Главная").performClick()
+        val sunday = today.plusDays((7 - today.dayOfWeek.value).toLong())
+        val label = sunday.format(DateTimeFormatter.ofPattern("d MMMM, EEEE", Locale("ru"))) + if (sunday == today) ", сегодня" else ""
+        val cell = ui.onNodeWithContentDescription(label).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        val root = ui.onRoot().fetchSemanticsNode().boundsInRoot
+        assertTrue("Sunday must fit without horizontal clipping", cell.right <= root.right && cell.left >= root.left)
+        ui.onNodeWithContentDescription(original.title).performClick()
+        ui.onNodeWithText("Отменить").performClick()
+        assertEquals(original.completed, PlannerStore(context).tasks.first { it.id == original.id }.completed)
+        ui.onNodeWithText(original.title).performTouchInput { longClick() }
+        ui.onNodeWithText("На завтра").assertIsDisplayed()
+        screenshot("quick-move")
+        ui.onNodeWithText("На завтра").performClick()
+        val moved = PlannerStore(context).tasks.first { it.id == original.id }
+        assertEquals(today.plusDays(1).toString(), moved.dueDate)
+        assertEquals(original.startMinutes, moved.startMinutes)
+        assertEquals(original.durationMinutes, moved.durationMinutes)
+        assertEquals(original.notes, moved.notes)
+        ui.runOnIdle { PlannerStore(context).updateTask(original) }
     }
 
     @Test fun taskCompletionAndHabitRenameSurviveStoreReload() {
