@@ -27,6 +27,9 @@ class PlannerInteractionTest {
         // Allow the actual window transition to settle before taking device pixels.
         instrumentation.waitForIdleSync()
         android.os.SystemClock.sleep(350)
+        val activeWindow = instrumentation.uiAutomation.rootInActiveWindow
+        assertEquals("Screenshot must not be covered by a system dialog",
+            instrumentation.targetContext.packageName, activeWindow?.packageName?.toString())
         val file = File(instrumentation.targetContext.getExternalFilesDir(null), "screenshots/$name.png")
         file.parentFile!!.mkdirs()
         instrumentation.uiAutomation.takeScreenshot().also { image ->
