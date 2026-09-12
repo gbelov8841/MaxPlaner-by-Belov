@@ -51,7 +51,7 @@ fun ActionSetupDialog(store: PlannerStore, onDismiss: () -> Unit, template: Acti
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = tokens.heroShape,
-        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = if (tokens.floatingGlass) .90f else 1f),
+        containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = tokens.heroElevation,
         title = { Text(if (template == null) "Своё действие" else "Добавить в план") },
         text = {

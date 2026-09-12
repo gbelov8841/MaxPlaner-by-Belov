@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.SystemClock
 import android.provider.Settings
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -48,6 +49,21 @@ class PlannerStore(context: Context) {
     val tasks = mutableStateListOf<PlannerTask>()
     val habits = mutableStateListOf<Habit>()
     val trackers = mutableStateListOf<Tracker>()
+    val completionHistory = mutableStateListOf<TaskCompletionRecord>().apply {
+        runCatching {
+            val items = JSONArray(prefs.getString("task_completion_history_v1", "[]"))
+            repeat(items.length()) { index ->
+                val item = items.getJSONObject(index)
+                add(TaskCompletionRecord(item.getString("taskId"), item.getString("title"), item.optString("category", "Личное"), item.getString("date")))
+            }
+        }
+    }
+    val focusByDay = mutableStateMapOf<String, Int>().apply {
+        runCatching {
+            val saved = JSONObject(prefs.getString("focus_days_v1", "{}") ?: "{}")
+            saved.keys().forEach { key -> put(key, saved.optInt(key).coerceAtLeast(0)) }
+        }
+    }
     private val bootId = runCatching { Settings.Global.getInt(context.contentResolver, Settings.Global.BOOT_COUNT, -1) }.getOrDefault(-1)
     var focusClock by mutableStateOf(readFocusClock())
         private set
@@ -207,6 +223,7 @@ class PlannerStore(context: Context) {
     fun updateTask(updated: PlannerTask) {
         val index = tasks.indexOfFirst { it.id == updated.id }
         if (index >= 0) {
+            if (tasks[index].completed != updated.completed) recordCompletion(updated)
             tasks[index] = updated
             persist()
         }
@@ -214,8 +231,16 @@ class PlannerStore(context: Context) {
 
     fun toggleTask(id: String) {
         val index = tasks.indexOfFirst { it.id == id }
-        if (index >= 0) tasks[index] = tasks[index].copy(completed = !tasks[index].completed)
+        if (index < 0) return
+        val updated = tasks[index].copy(completed = !tasks[index].completed)
+        recordCompletion(updated)
+        tasks[index] = updated
         persist()
+    }
+
+    private fun recordCompletion(task: PlannerTask) {
+        completionHistory.removeAll { it.taskId == task.id }
+        if (task.completed) completionHistory += TaskCompletionRecord(task.id, task.title, task.category, LocalDate.now().toString())
     }
 
     fun toggleChecklistItem(taskId: String, itemId: String) {
@@ -250,6 +275,14 @@ class PlannerStore(context: Context) {
         persist()
     }
 
+    fun updateHabit(id: String, title: String, schedule: HabitSchedule, start: Int?, duration: Int) {
+        val index = habits.indexOfFirst { it.id == id }
+        if (index < 0 || title.isBlank()) return
+        habits[index] = habits[index].copy(title = title.trim(), schedule = schedule.normalized(),
+            startMinutes = start?.takeIf { it in 0..1439 }, durationMinutes = duration.coerceIn(15, 720))
+        persist()
+    }
+
     fun updateHabitSchedule(id: String, schedule: HabitSchedule) {
         val index = habits.indexOfFirst { it.id == id }
         if (index < 0) return
@@ -262,7 +295,7 @@ class PlannerStore(context: Context) {
     fun toggleHabitOn(id: String, date: LocalDate) {
         val index = habits.indexOfFirst { it.id == id }
         if (index < 0) return
-        if (!habits[index].schedule.isScheduled(date)) return
+        if (date > today || !habits[index].schedule.isScheduled(date)) return
         val dateKey = date.toString()
         val dates = habits[index].completedDates.toMutableSet()
         if (!dates.add(dateKey)) dates.remove(dateKey)
@@ -309,6 +342,12 @@ class PlannerStore(context: Context) {
 
     private fun saveFocus(next: FocusState) {
         if (next == focusState) return
+        val award = next.totalMinutes - focusState.totalMinutes
+        if (award > 0) {
+            val completedAt = focusState.session.deadlineWallMillis.takeIf { it > 0 } ?: focusClock.wallMillis
+            val day = java.time.Instant.ofEpochMilli(completedAt).atZone(java.time.ZoneId.systemDefault()).toLocalDate().toString()
+            focusByDay[day] = (focusByDay[day] ?: 0) + award
+        }
         focusState = next
         val session = next.session
         val saved = JSONObject().apply {
@@ -319,7 +358,8 @@ class PlannerStore(context: Context) {
             put("bootId", session.bootId)
         }
         prefs.edit().putString("focus_session", saved.toString())
-            .putInt("focus_minutes", next.totalMinutes).apply()
+            .putInt("focus_minutes", next.totalMinutes)
+            .putString("focus_days_v1", JSONObject(focusByDay.toMap()).toString()).apply()
     }
 
     fun streak(habit: Habit): Int = scheduledHabitStreak(habit.completedDates, habit.schedule)
@@ -435,6 +475,12 @@ class PlannerStore(context: Context) {
                 })
             }
         }
-        prefs.edit().putString("tasks", taskArray.toString()).putString("habits", habitArray.toString()).apply()
+        val history = JSONArray().apply {
+            completionHistory.forEach { record -> put(JSONObject().apply {
+                put("taskId", record.taskId); put("title", record.title); put("category", record.category); put("date", record.date)
+            }) }
+        }
+        prefs.edit().putString("tasks", taskArray.toString()).putString("habits", habitArray.toString())
+            .putString("task_completion_history_v1", history.toString()).apply()
     }
 }
