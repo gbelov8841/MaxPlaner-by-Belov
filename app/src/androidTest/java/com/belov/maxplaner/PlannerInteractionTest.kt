@@ -23,6 +23,10 @@ class PlannerInteractionTest {
     private fun screenshot(name: String) {
         ui.waitForIdle()
         val instrumentation = InstrumentationRegistry.getInstrumentation()
+        // Semantics can update before SurfaceFlinger presents the navigation frame.
+        // Allow the actual window transition to settle before taking device pixels.
+        instrumentation.waitForIdleSync()
+        android.os.SystemClock.sleep(350)
         val file = File(instrumentation.targetContext.getExternalFilesDir(null), "screenshots/$name.png")
         file.parentFile!!.mkdirs()
         instrumentation.uiAutomation.takeScreenshot().also { image ->
@@ -57,12 +61,14 @@ class PlannerInteractionTest {
             screenshot("${pack.id}-progress")
             ui.onNodeWithText("Ещё").performClick()
             ui.onNodeWithText("Привычки").performClick()
+            ui.onNodeWithContentDescription("Новая привычка").assertIsDisplayed()
             screenshot("${pack.id}-habits")
             ui.onNodeWithContentDescription("Новая привычка").performClick()
             screenshot("${pack.id}-habit-form")
             ui.onNodeWithText("Отмена").performClick()
             ui.onNodeWithText("Ещё").performClick()
             ui.onNodeWithText("Настройки").performClick()
+            ui.onNodeWithText("Как к тебе обращаться").assertIsDisplayed()
             screenshot("${pack.id}-settings")
             ui.onNodeWithText("Ещё").performClick()
             ui.onNodeWithText("Дела и каталог действий").performClick()
