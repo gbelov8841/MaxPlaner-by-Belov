@@ -27,9 +27,14 @@ class PlannerInteractionTest {
         // Allow the actual window transition to settle before taking device pixels.
         instrumentation.waitForIdleSync()
         android.os.SystemClock.sleep(350)
-        val activeWindow = instrumentation.uiAutomation.rootInActiveWindow
+        // Accessibility focus is briefly absent after a dialog is dismissed.
+        var activePackage: String? = null
+        ui.waitUntil(timeoutMillis = 5_000) {
+            activePackage = instrumentation.uiAutomation.rootInActiveWindow?.packageName?.toString()
+            activePackage != null
+        }
         assertEquals("Screenshot must not be covered by a system dialog",
-            instrumentation.targetContext.packageName, activeWindow?.packageName?.toString())
+            instrumentation.targetContext.packageName, activePackage)
         val file = File(instrumentation.targetContext.getExternalFilesDir(null), "screenshots/$name.png")
         file.parentFile!!.mkdirs()
         instrumentation.uiAutomation.takeScreenshot().also { image ->
