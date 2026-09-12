@@ -26,6 +26,8 @@ import com.belov.maxplaner.ui.icons.PrimeIcons
 import com.belov.maxplaner.ui.screens.*
 import com.belov.maxplaner.ui.theme.*
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
 import java.time.LocalDate
 
@@ -37,6 +39,21 @@ private val tabs = listOf(Tab("today", "Главная", PrimeIcons.Home), Tab("
 fun MaxPlanerApp(appearance: AppearanceStore) {
     val context = LocalContext.current
     val store = remember { PlannerStore(context.applicationContext) }
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    var undoJob by remember { mutableStateOf<Job?>(null) }
+    val toggleTask: (String) -> Unit = { id ->
+        val before = store.tasks.firstOrNull { it.id == id }
+        if (before != null) {
+            undoJob?.cancel()
+            store.toggleTask(id)
+            if (!before.completed) undoJob = scope.launch {
+                if (snackbar.showSnackbar("Выполнено", "Отменить", withDismissAction = true) == SnackbarResult.ActionPerformed) {
+                    if (store.tasks.firstOrNull { it.id == id }?.completed == true) store.toggleTask(id)
+                }
+            }
+        }
+    }
     val owner = LocalLifecycleOwner.current
     LaunchedEffect(store, owner) {
         owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -55,11 +72,12 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
             launchSingleTop = true; restoreState = true
         }
     }
+    CompositionLocalProvider(LocalTaskCompletion provides toggleTask) {
     Box(Modifier.fillMaxSize()) {
         PlannerBackdrop()
-        Scaffold(containerColor = Color.Transparent, contentColor = p.text, bottomBar = {
-            Box(Modifier.navigationBarsPadding().padding(horizontal = 16.dp, vertical = 8.dp)) {
-                PlannerSurface(shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
+        Scaffold(snackbarHost = { SnackbarHost(snackbar) }, containerColor = Color.Transparent, contentColor = p.text, bottomBar = {
+            Box(Modifier.navigationBarsPadding().padding(horizontal = 12.dp, vertical = 8.dp)) {
+                PlannerSurface(shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
                     Row(Modifier.fillMaxWidth().heightIn(min = p.navigationHeight).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                         tabs.forEachIndexed { index, tab ->
                             if (index == 2) Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
@@ -72,7 +90,7 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
                             }
                             val selected = route == tab.route || (tab.route == "more" && route in listOf("appearance", "habits", "tasks", "settings"))
                             Column(Modifier.weight(1f).heightIn(min = 56.dp).selectable(selected = selected, role = Role.Tab,
-                                onClick = { navigate(tab.route) }).padding(vertical = 10.dp),
+                                onClick = { navigate(tab.route) }).padding(vertical = 6.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(3.dp)) {
                                 Icon(tab.icon, null, Modifier.size(20.dp), tint = if (selected) p.accent else p.secondaryText)
                                 Text(tab.label, style = MaterialTheme.typography.labelSmall, color = if (selected) p.text else p.secondaryText)
@@ -97,4 +115,5 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
         }
     }
     if (quickAdd) ActionSetupDialog(store, onDismiss = { quickAdd = false })
+    }
 }

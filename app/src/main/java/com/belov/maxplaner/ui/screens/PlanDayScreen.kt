@@ -2,6 +2,7 @@ package com.belov.maxplaner.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -28,6 +29,7 @@ fun PlanDayScreen(store: PlannerStore, dateText: String, onDateChange: (LocalDat
     var add by rememberSaveable { mutableStateOf(false) }
     var addTime by rememberSaveable { mutableStateOf<Int?>(null) }
     var selectedKey by rememberSaveable { mutableStateOf<String?>(null) }
+    var movingTaskId by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedTaskId by rememberSaveable { mutableStateOf<String?>(null) }
     val selectedTask = store.tasks.firstOrNull { it.id == selectedTaskId }
     if (selectedTask != null) { TaskDetailScreen(store, selectedTask) { selectedTaskId = null }; return }
@@ -42,14 +44,14 @@ fun PlanDayScreen(store: PlannerStore, dateText: String, onDateChange: (LocalDat
     fun step(direction: Long) {
         onDateChange(when (mode) { "Неделя" -> date.plusWeeks(direction); "Месяц" -> date.plusMonths(direction); else -> date.plusDays(direction) })
     }
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 16.dp, 20.dp, 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("План дня", style = MaterialTheme.typography.headlineLarge)
                     Text(date.format(DateTimeFormatter.ofPattern("d MMMM, EEEE", Locale("ru"))), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                TextButton(onClick = { onDateChange(store.today); mode = "День" }) { Text("Сегодня") }
+                TextButton(onClick = { onDateChange(store.today); mode = "День" }, colors = ButtonDefaults.textButtonColors(contentColor = if (date == store.today) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary)) { Text("Сегодня") }
             }
         }
         item {
@@ -69,27 +71,36 @@ fun PlanDayScreen(store: PlannerStore, dateText: String, onDateChange: (LocalDat
             }
         }
         if (mode == "День") {
-            item { PlannerWeekStrip(date, store.today, onDateChange) }
+            item { PlannerWeekStrip(date, store.today, onDateChange) { agendaItems(store.tasks, store.habits, store.trackers, it).size } }
             item {
-                PlannerCard(modifier = Modifier.fillMaxWidth()) {
-                    PanelHeading("Без времени")
+                Column(Modifier.fillMaxWidth()) {
+                    Text("Без времени", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(vertical = 8.dp))
                     val untimed = entries.filter { it.startMinutes == null }
                     if (untimed.isEmpty()) Text("Нет дел без времени", Modifier.padding(horizontal = 14.dp, vertical = 8.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    untimed.forEach { item -> AgendaCompactRow(store, item, date) { open(item) } }
+                    untimed.forEach { item ->
+                        AgendaCompactRow(store, item, date) { open(item) }
+                        HorizontalDivider(thickness = .5.dp)
+                    }
                     InlineAdd { addAt(null) }
                 }
             }
             item {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Расписание", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                    TextButton(onClick = { addAt(9 * 60) }) { Icon(Icons.Rounded.Add, null, Modifier.size(18.dp)); Text("Добавить") }
+                    if (segments.isNotEmpty()) TextButton(onClick = { addAt(9 * 60) }) { Icon(Icons.Rounded.Add, null, Modifier.size(18.dp)); Text("Добавить") }
                 }
-                Text("Дела по времени · свободные промежутки сокращены", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (segments.isNotEmpty()) Text("Дела по времени · свободные промежутки сокращены", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (segments.isEmpty()) item {
-                PlannerCard(modifier = Modifier.fillMaxWidth()) {
-                    Text("Расписание свободно", Modifier.padding(14.dp), style = MaterialTheme.typography.bodyMedium)
-                    InlineAdd("Запланировать дело") { addAt(9 * 60) }
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Rounded.CalendarToday, null, Modifier.size(20.dp))
+                        Column(Modifier.padding(start = 12.dp)) {
+                            Text("Пока нет дел по времени", style = MaterialTheme.typography.bodyMedium)
+                            Text("Добавь первое дело на этот день", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    OutlinedButton(onClick = { addAt(9 * 60) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("+ Запланировать дело") }
                 }
             }
             items(segments, key = { it.item.key }) { segment ->
@@ -99,8 +110,12 @@ fun PlanDayScreen(store: PlannerStore, dateText: String, onDateChange: (LocalDat
                     PlannerCard(modifier = Modifier.weight(1f)) {
                         AgendaCompactRow(store, segment.item, date) { open(segment.item) }
                         if (segment.item.occurrenceDate < date) Text("Продолжение со вчера", Modifier.padding(horizontal = 14.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall)
-                        if (conflicts.isNotEmpty()) Text("Пересечение: " + conflicts.joinToString { it.item.title },
-                            Modifier.padding(horizontal = 14.dp, vertical = 8.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                        if (conflicts.isNotEmpty()) Row(Modifier.padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text("Пересечение времени", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                            TextButton(onClick = {
+                                if (segment.item.kind == AgendaKind.TASK) movingTaskId = segment.item.id else selectedKey = segment.item.key
+                            }) { Text("Перенести") }
+                        }
                     }
                 }
             }
@@ -120,6 +135,8 @@ fun PlanDayScreen(store: PlannerStore, dateText: String, onDateChange: (LocalDat
             item { PlannerMonth(date, store.today, count = { agendaItems(store.tasks, store.habits, store.trackers, it).size }) { onDateChange(it); mode = "День" } }
         }
     }
+    val movingTask = store.tasks.firstOrNull { it.id == movingTaskId }
+    if (movingTask != null) TaskQuickActions(store, movingTask, { movingTaskId = null }) { selectedTaskId = movingTask.id }
     if (selected != null) AgendaEntryDialog(store, selected) { selectedKey = null }
     if (add) TaskEditorDialog(store = store, initialDate = date, initialStartMinutes = addTime, onDismiss = { add = false }, onSaved = { it?.let(onDateChange) })
 }
@@ -130,9 +147,9 @@ private fun AgendaCompactRow(store: PlannerStore, item: AgendaItem, visibleDate:
     if (task != null) { PlannerTaskRow(store, task, onOpen); return }
     val tracker = store.trackers.firstOrNull { it.id == item.id && item.kind == AgendaKind.TRACKER }
     val checkable = tracker == null || tracker.type in listOf(TrackerType.CHECK, TrackerType.STREAK)
-    PlannerSurface(modifier = Modifier.fillMaxWidth(), color = androidx.compose.ui.graphics.Color.Transparent, onClick = onOpen) {
+    Box(modifier = Modifier.fillMaxWidth().clickable(onClick = onOpen)) {
         Row(Modifier.padding(end = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (checkable) CompletionButton(item.completed, item.title) {
+            if (checkable) CompletionButton(item.completed, item.title, enabled = item.kind != AgendaKind.HABIT || item.occurrenceDate <= store.today) {
                 when (item.kind) {
                     AgendaKind.HABIT -> store.toggleHabitOn(item.id, item.occurrenceDate)
                     AgendaKind.TRACKER -> store.setTrackerValue(item.id, item.occurrenceDate, if (item.completed) null else 1.0)

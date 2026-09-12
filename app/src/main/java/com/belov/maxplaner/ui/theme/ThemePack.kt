@@ -12,7 +12,7 @@ data class ArtworkTokens(val resource: Int, val topScrim: Float, val middleScrim
 
 @Immutable
 data class SurfaceTokens(val color: Color, val opacity: Float, val border: Color, val borderAlpha: Float,
-    val modal: Color, val cardRadius: Dp = 14.dp, val compactRadius: Dp = 10.dp,
+    val modal: Color, val cardRadius: Dp = 12.dp, val compactRadius: Dp = 10.dp,
     val elevation: Dp = 0.dp, val glowAlpha: Float = 0f, val glowRadius: Dp = 8.dp,
     val backdropBlur: Dp = 0.dp)
 
@@ -24,7 +24,7 @@ data class ThemePack(val id: String, val name: String, val description: String, 
     val background: Color, val text: Color, val secondaryText: Color, val accent: Color,
     val secondaryAccent: Color, val onAccent: Color, val artwork: ArtworkTokens,
     val surfaces: SurfaceTokens, val states: StateTokens = StateTokens(),
-    val headingSerif: Boolean = false, val navigationHeight: Dp = 64.dp, val addSize: Dp = 44.dp,
+    val headingSerif: Boolean = false, val navigationHeight: Dp = 56.dp, val addSize: Dp = 40.dp,
     val progressHeight: Dp = 3.dp, val chartTask: Color = accent,
     val chartHabit: Color = secondaryAccent, val chartFocus: Color = secondaryText)
 

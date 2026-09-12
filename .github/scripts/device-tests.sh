@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set +e
+adb shell wm size 1080x2340
+adb shell wm density 450
 gradle :app:connectedDebugAndroidTest
 result=$?
 adb pull /sdcard/Download/primeplaner-screenshots ui-screenshots

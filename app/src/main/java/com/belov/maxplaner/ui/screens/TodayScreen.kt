@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -39,7 +40,7 @@ fun TodayScreen(store: PlannerStore, displayName: String,
     val done = tasks.count { it.completed }
     val greeting = when (LocalTime.now().hour) { in 5..11 -> "Доброе утро,"; in 12..17 -> "Добрый день,"; in 18..22 -> "Добрый вечер,"; else -> "Доброй ночи," }
     val seconds = (store.focusState.session.remainingMillis(store.focusClock) + 999) / 1000
-    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 16.dp, 20.dp, 20.dp),
+    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Column {
@@ -53,7 +54,7 @@ fun TodayScreen(store: PlannerStore, displayName: String,
                 Spacer(Modifier.height(8.dp))
             }
         }
-        item { PlannerWeekStrip(date, date, onOpenPlan) }
+        item { PlannerWeekStrip(date, date, onOpenPlan) { agendaItems(store.tasks, store.habits, store.trackers, it).size } }
         item {
             PlannerCard(modifier = Modifier.fillMaxWidth()) {
                 PanelHeading("План на сегодня", if (tasks.isEmpty()) "Открыть" else "$done из ${tasks.size}") { onOpenPlan(date) }
@@ -71,13 +72,13 @@ fun TodayScreen(store: PlannerStore, displayName: String,
             val habitText = "${habits.count { date.toString() in it.completedDates }} из ${habits.size}"
             val focusText = "%02d:%02d".format(seconds / 60, seconds % 60)
             if (LocalDensity.current.fontScale > 1.3f) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                HomeShortcut("Привычки", habitText, Icons.Rounded.Spa, Modifier.fillMaxWidth(), onOpenHabits)
-                HomeShortcut("Фокус", focusText, Icons.Rounded.Timer, Modifier.fillMaxWidth()) { showFocus = true }
-                HomeShortcut("Каталог", "Готовые действия", Icons.Rounded.GridView, Modifier.fillMaxWidth()) { showCatalog = true }
+                HomeShortcut("Привычки", habitText, Icons.Outlined.Spa, Modifier.fillMaxWidth(), onOpenHabits)
+                HomeShortcut("Фокус", focusText, Icons.Outlined.Timer, Modifier.fillMaxWidth()) { showFocus = true }
+                HomeShortcut("Каталог", "Готовые действия", Icons.Outlined.GridView, Modifier.fillMaxWidth()) { showCatalog = true }
             } else Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                HomeShortcut("Привычки", habitText, Icons.Rounded.Spa, Modifier.weight(1f), onOpenHabits)
-                HomeShortcut("Фокус", focusText, Icons.Rounded.Timer, Modifier.weight(1f)) { showFocus = true }
-                HomeShortcut("Каталог", "Готовые действия", Icons.Rounded.GridView, Modifier.weight(1f)) { showCatalog = true }
+                HomeShortcut("Привычки", habitText, Icons.Outlined.Spa, Modifier.weight(1f), onOpenHabits)
+                HomeShortcut("Фокус", focusText, Icons.Outlined.Timer, Modifier.weight(1f)) { showFocus = true }
+                HomeShortcut("Каталог", "Готовые действия", Icons.Outlined.GridView, Modifier.weight(1f)) { showCatalog = true }
             }
         }
         item {

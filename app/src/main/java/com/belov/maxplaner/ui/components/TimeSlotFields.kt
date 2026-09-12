@@ -59,7 +59,7 @@ fun TimeSlotFields(start: Int?, durationText: String, onStart: (Int?) -> Unit, o
     if (picker) {
         val time = rememberTimePickerState(initialHour = (start ?: 540) / 60, initialMinute = (start ?: 540) % 60, is24Hour = true)
         AlertDialog(onDismissRequest = { picker = false }, shape = tokens.heroShape,
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = if (tokens.floatingGlass) .88f else 1f),
+            containerColor = MaterialTheme.colorScheme.surface,
             tonalElevation = tokens.heroElevation, title = { Text("Время начала") }, text = { TimeInput(state = time) },
             confirmButton = { TextButton(onClick = { onStart(time.hour * 60 + time.minute); picker = false }) { Text("Выбрать") } },
             dismissButton = { TextButton(onClick = { picker = false }) { Text("Отмена") } })
@@ -73,7 +73,7 @@ fun EditTimeSlotDialog(title: String, start: Int?, duration: Int, onDismiss: () 
     val parsed = durationText.toIntOrNull()
     val tokens = LocalStyleTokens.current
     AlertDialog(onDismissRequest = onDismiss, shape = tokens.heroShape,
-        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = if (tokens.floatingGlass) .88f else 1f),
+        containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = tokens.heroElevation, title = { Text(title) },
         text = { TimeSlotFields(selectedStart, durationText, { selectedStart = it }, { durationText = it }) },
         confirmButton = { TextButton(enabled = selectedStart == null || parsed != null && parsed in 15..720, onClick = {

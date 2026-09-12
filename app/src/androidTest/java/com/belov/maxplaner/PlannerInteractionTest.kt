@@ -105,6 +105,31 @@ class PlannerInteractionTest {
         screenshot("task-detail")
     }
 
+    @Test fun weekFitsUndoAndQuickMovePreserveTask() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val today = LocalDate.now()
+        val original = PlannerStore(context).tasks.first { it.dueDate == today.toString() }
+        ui.onNodeWithText("Главная").performClick()
+        val sunday = today.plusDays((7 - today.dayOfWeek.value).toLong())
+        val label = sunday.format(DateTimeFormatter.ofPattern("d MMMM, EEEE", Locale("ru"))) + if (sunday == today) ", сегодня" else ""
+        val cell = ui.onNodeWithContentDescription(label).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        val root = ui.onRoot().fetchSemanticsNode().boundsInRoot
+        assertTrue("Sunday must fit without horizontal clipping", cell.right <= root.right && cell.left >= root.left)
+        ui.onNodeWithContentDescription(original.title).performClick()
+        ui.onNodeWithText("Отменить").performClick()
+        assertEquals(original.completed, PlannerStore(context).tasks.first { it.id == original.id }.completed)
+        ui.onNodeWithText(original.title).performTouchInput { longClick() }
+        ui.onNodeWithText("На завтра").assertIsDisplayed()
+        screenshot("quick-move")
+        ui.onNodeWithText("На завтра").performClick()
+        val moved = PlannerStore(context).tasks.first { it.id == original.id }
+        assertEquals(today.plusDays(1).toString(), moved.dueDate)
+        assertEquals(original.startMinutes, moved.startMinutes)
+        assertEquals(original.durationMinutes, moved.durationMinutes)
+        assertEquals(original.notes, moved.notes)
+        ui.runOnIdle { PlannerStore(context).updateTask(original) }
+    }
+
     @Test fun taskCompletionAndHabitRenameSurviveStoreReload() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         ui.runOnIdle {
