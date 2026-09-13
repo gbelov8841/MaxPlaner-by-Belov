@@ -1,6 +1,7 @@
 package com.belov.maxplaner.data
 
 import android.content.Context
+import com.belov.maxplaner.ai.*
 import android.os.SystemClock
 import android.provider.Settings
 import androidx.compose.runtime.getValue
@@ -104,6 +105,18 @@ class PlannerStore(context: Context) {
             persist()
             prefs.edit().putBoolean("seeded", true).apply()
         }
+    }
+
+    /** UI-thread adapter: only this explicit confirmation path accepts AI task batches. */
+    fun applyAiPreview(preview: PlanPreview, approval: PlanApproval, nowMillis: Long = System.currentTimeMillis()): ApplyPreviewResult {
+        check(android.os.Looper.myLooper() == android.os.Looper.getMainLooper())
+        val receipts = prefs.getStringSet("ai_plan_receipts_v1", emptySet()).orEmpty().toSet()
+        val result = PlanPreviewEngine.prepare(tasks.toList(), preview, approval, receipts, nowMillis)
+        if (result !is ApplyPreviewResult.Ready) return result
+        if (!persist(result.tasks, receipts + result.receipt)) return ApplyPreviewResult.Rejected("Не удалось сохранить план")
+        tasks.clear()
+        tasks.addAll(result.tasks)
+        return ApplyPreviewResult.Applied
     }
 
     fun addTracker(tracker: Tracker) {
@@ -435,9 +448,9 @@ class PlannerStore(context: Context) {
         HabitScheduleType.WEEKDAYS -> copy(weekdays = weekdays.toSet())
     }
 
-    private fun persist() {
+    private fun persist(taskSnapshot: List<PlannerTask> = tasks.toList(), receipts: Set<String>? = null): Boolean {
         val taskArray = JSONArray().apply {
-            tasks.forEach { task ->
+            taskSnapshot.forEach { task ->
                 put(JSONObject().apply {
                     put("id", task.id)
                     put("title", task.title)
@@ -480,7 +493,10 @@ class PlannerStore(context: Context) {
                 put("taskId", record.taskId); put("title", record.title); put("category", record.category); put("date", record.date)
             }) }
         }
-        prefs.edit().putString("tasks", taskArray.toString()).putString("habits", habitArray.toString())
-            .putString("task_completion_history_v1", history.toString()).apply()
+        val editor = prefs.edit().putString("tasks", taskArray.toString()).putString("habits", habitArray.toString())
+            .putString("task_completion_history_v1", history.toString())
+        if (receipts != null) return editor.putStringSet("ai_plan_receipts_v1", receipts).commit()
+        editor.apply()
+        return true
     }
 }
