@@ -59,6 +59,7 @@ fun AppearanceScreen(appearance: AppearanceStore) {
 @Composable
 fun MoreScreen(onNavigate: (String) -> Unit) {
     val sections = listOf(Triple("habits", "Привычки", Icons.Rounded.Spa), Triple("tasks", "Дела и каталог действий", Icons.Rounded.GridView),
+        Triple("nutrition", "Питание", Icons.Rounded.Restaurant), Triple("prime-ai", "Prime AI", Icons.Rounded.AutoAwesome),
         Triple("appearance", "Оформление", Icons.Rounded.Palette), Triple("settings", "Настройки", Icons.Rounded.Settings))
     LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { Text("Ещё", style = MaterialTheme.typography.headlineLarge) }

@@ -126,3 +126,19 @@ and sample counts. No causal or medical claims from observational correlations.
 
 Phase 1 does not claim live AI, finished UI, working reminders, historical AI insights,
 or Samsung acceptance. These require their own tested implementation and handoff.
+
+## Phase 2: local UI (0.3.0)
+
+Home opens nutrition and Prime AI in the existing navigation. Manual portion totals,
+dated targets, food edits/deletes and history work locally; Progress shows entered
+intake with target. Profile preferences can be confirmed, edited and forgotten.
+The preview screen is exercised with a fake ONLY in androidTest. Shipping provider
+still returns unavailable; no network/credential/health prescription is introduced.
+All 5 theme screenshots now include nutrition, Prime AI and confirmed memory.
+The fake UI test proves that Generate does not write and Apply writes exactly once.
+
+Pending: real backend transport/identity/quotas, free-text food estimation,
+photo/barcode capture, structured goal/profile forms, historical food analytics,
+complete habit/tracker overlap validation and multi-entity transactional plans.
+The local task preview should not be enabled with a real provider before these
+validation/consent boundaries are completed. Samsung visual acceptance remains open.

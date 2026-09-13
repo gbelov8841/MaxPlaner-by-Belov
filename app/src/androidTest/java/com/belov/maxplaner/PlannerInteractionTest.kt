@@ -81,11 +81,50 @@ class PlannerInteractionTest {
             ui.onNodeWithText("Как к тебе обращаться").assertIsDisplayed()
             screenshot("${pack.id}-settings")
             ui.onNodeWithText("Ещё").performClick()
+            ui.onNodeWithText("Питание").performClick()
+            screenshot("${pack.id}-nutrition")
+            ui.onNodeWithText("Ещё").performClick()
+            ui.onNodeWithText("Prime AI").performClick()
+            screenshot("${pack.id}-prime-ai")
+            ui.onNodeWithText("Мой профиль Prime AI").performClick()
+            screenshot("${pack.id}-prime-memory")
+            ui.onNodeWithText("Ещё").performClick()
             ui.onNodeWithText("Дела и каталог действий").performClick()
             screenshot("${pack.id}-tasks")
             ui.onNodeWithText("Выбрать готовое").performClick()
             screenshot("${pack.id}-catalog")
             ui.onNodeWithText("Закрыть").performClick()
+        }
+    }
+
+    @Test fun manualFoodEntryAndUnavailableAiKeepPlannerWorking() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val title = "Проверка еды " + java.util.UUID.randomUUID().toString().take(8)
+        val before = PlannerStore(context).tasks.toList()
+        try {
+            ui.onNodeWithText("Ещё").performClick()
+            ui.onNodeWithText("Питание").performClick()
+            ui.onNodeWithText("Добавить еду вручную").performClick()
+            ui.onNodeWithText("Название еды").performScrollTo().performTextInput(title)
+            ui.onNodeWithText("Порция, например 180 г").performScrollTo().performTextInput("100 г")
+            ui.onNodeWithText("Калории, ккал").performScrollTo().performTextInput("200")
+            ui.onNodeWithText("Белки, г").performScrollTo().performTextInput("10")
+            ui.onNodeWithText("Жиры, г").performScrollTo().performTextInput("5")
+            ui.onNodeWithText("Углеводы, г").performScrollTo().performTextInput("20")
+            ui.onNodeWithText("Добавить в день").performClick()
+            com.belov.maxplaner.ai.PrimeLocalStore(context).use { db ->
+                assertEquals(200.0, db.entries(LocalDate.now()).single { it.items.first().name == title }.total.kcal, 0.0)
+            }
+            ui.onNodeWithText("Ещё").performClick()
+            ui.onNodeWithText("Prime AI").performClick()
+            ui.onNodeWithText("Чего хочешь достичь?").performTextInput("Хочу больше гулять")
+            ui.onNodeWithText("Создать предложение").performClick()
+            ui.onNodeWithText("Prime AI временно недоступен").assertIsDisplayed()
+            assertEquals(before, PlannerStore(context).tasks.toList())
+        } finally {
+            com.belov.maxplaner.ai.PrimeLocalStore(context).use { db ->
+                db.entries(LocalDate.now()).filter { it.items.first().name == title }.forEach { db.deleteFood(it.id) }
+            }
         }
     }
 
