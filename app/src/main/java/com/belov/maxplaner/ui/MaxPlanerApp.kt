@@ -21,6 +21,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
 import com.belov.maxplaner.data.PlannerStore
+import com.belov.maxplaner.ai.PrimeLocalStore
 import com.belov.maxplaner.ui.components.*
 import com.belov.maxplaner.ui.icons.PrimeIcons
 import com.belov.maxplaner.ui.screens.*
@@ -39,6 +40,11 @@ private val tabs = listOf(Tab("today", "Главная", PrimeIcons.Home), Tab("
 fun MaxPlanerApp(appearance: AppearanceStore) {
     val context = LocalContext.current
     val store = remember { PlannerStore(context.applicationContext) }
+    val nutrition = remember { PrimeLocalStore(context.applicationContext) }
+    DisposableEffect(nutrition) { onDispose { nutrition.close() } }
+    var quickFood by rememberSaveable { mutableStateOf(false) }
+    var nutritionRevision by remember { mutableIntStateOf(0) }
+    val nutritionDay = remember(nutritionRevision, store.today) { nutrition.day(store.today) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var undoJob by remember { mutableStateOf<Job?>(null) }
@@ -88,7 +94,7 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
                                     }
                                 }
                             }
-                            val selected = route == tab.route || (tab.route == "more" && route in listOf("appearance", "habits", "tasks", "settings"))
+                            val selected = route == tab.route || (tab.route == "more" && route in listOf("appearance", "habits", "tasks", "settings", "nutrition", "prime-ai", "prime-memory"))
                             Column(Modifier.weight(1f).heightIn(min = 56.dp).selectable(selected = selected, role = Role.Tab,
                                 onClick = { navigate(tab.route) }).padding(vertical = 6.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(3.dp)) {
@@ -101,15 +107,18 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
             }
         }) { padding ->
             NavHost(nav, startDestination = "today", modifier = Modifier.padding(padding)) {
-                composable("today") { TodayScreen(store, appearance.displayName,
+                composable("today") { TodayScreen(store, appearance.displayName, nutritionDay, { navigate("nutrition") }, { quickFood = true; navigate("nutrition") }, { navigate("prime-ai") },
                     onOpenPlan = { selectedDate = it.toString(); navigate("calendar") },
                     onOpenProgress = { navigate("analytics") }, onOpenHabits = { navigate("habits") }) }
                 composable("calendar") { PlanDayScreen(store, selectedDate) { selectedDate = it.toString() } }
                 composable("tasks") { TasksV2Screen(store) }
                 composable("habits") { HabitsV2Screen(store) }
-                composable("analytics") { AnalyticsV2Screen(store, { navigate("tasks") }, { navigate("habits") }, { quickAdd = true }) }
+                composable("analytics") { AnalyticsV2Screen(store, { navigate("tasks") }, { navigate("habits") }, { quickAdd = true }, nutritionDay, { navigate("nutrition") }) }
                 composable("more") { MoreScreen(onNavigate = { navigate(it) }) }
                 composable("appearance") { AppearanceScreen(appearance) }
+                composable("nutrition") { NutritionScreen(nutrition, store.today, quickFood, { quickFood = false }) { nutritionRevision++ } }
+                composable("prime-ai") { PrimeAiScreen(store, { navigate("prime-memory") }) }
+                composable("prime-memory") { PrimeMemoryScreen(nutrition) }
                 composable("settings") { SettingsScreen(appearance) }
             }
         }

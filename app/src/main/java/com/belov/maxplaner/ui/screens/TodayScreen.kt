@@ -24,7 +24,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @Composable
-fun TodayScreen(store: PlannerStore, displayName: String,
+fun TodayScreen(store: PlannerStore, displayName: String, nutrition: com.belov.maxplaner.ai.NutritionDay, onOpenNutrition: () -> Unit, onAddFood: () -> Unit, onOpenAi: () -> Unit,
     onOpenPlan: (LocalDate) -> Unit, onOpenProgress: () -> Unit, onOpenHabits: () -> Unit) {
     var selectedTaskId by rememberSaveable { mutableStateOf<String?>(null) }
     var showAdd by rememberSaveable { mutableStateOf(false) }
@@ -68,6 +68,14 @@ fun TodayScreen(store: PlannerStore, displayName: String,
                 InlineAdd { showAdd = true }
             }
         }
+        item { PlannerSurface(modifier = Modifier.fillMaxWidth(), onClick = onOpenAi) {
+            Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("✦  Prime AI", Modifier.weight(1f), style = MaterialTheme.typography.titleSmall)
+                Text("Создать план", style = MaterialTheme.typography.labelSmall)
+                Icon(Icons.Rounded.ChevronRight, null, Modifier.size(18.dp))
+            }
+        } }
+        item { NutritionSummary(nutrition, onOpenNutrition, onAddFood) }
         item {
             val habitText = "${habits.count { date.toString() in it.completedDates }} из ${habits.size}"
             val focusText = "%02d:%02d".format(seconds / 60, seconds % 60)

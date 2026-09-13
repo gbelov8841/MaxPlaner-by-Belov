@@ -15,7 +15,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun AnalyticsV2Screen(store: PlannerStore, onOpenTasks: () -> Unit = {}, onOpenHabits: () -> Unit = {}, onAdd: () -> Unit = {}) {
+fun AnalyticsV2Screen(store: PlannerStore, onOpenTasks: () -> Unit = {}, onOpenHabits: () -> Unit = {}, onAdd: () -> Unit = {}, nutrition: com.belov.maxplaner.ai.NutritionDay? = null, onOpenNutrition: () -> Unit = {}) {
     var days by rememberSaveable { mutableStateOf(7) }
     var detailDay by rememberSaveable { mutableStateOf<String?>(null) }
     var category by rememberSaveable { mutableStateOf<String?>(null) }
@@ -57,6 +57,17 @@ fun AnalyticsV2Screen(store: PlannerStore, onOpenTasks: () -> Unit = {}, onOpenH
                 }
             }
         }
+        nutrition?.let { day -> item {
+            PlannerCard(Modifier.fillMaxWidth()) {
+                PanelHeading("Питание сегодня", "Дневник", onOpenNutrition)
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Цель: ${day.target?.let { amount(it.kcal) + " ккал" } ?: "не задана"}")
+                    Text("Факт: ${amount(day.consumed.kcal)} ккал")
+                    Text(macroText(day.consumed), style = MaterialTheme.typography.bodySmall)
+                    Text("Итог по внесённым записям", style = MaterialTheme.typography.labelSmall)
+                }
+            }
+        } }
         item { Text("По дням", style = MaterialTheme.typography.titleMedium) }
         items(dates.reversed(), key = { it.toString() }) { date ->
             val summary = periodProgress(store.completionHistory, store.habits, store.focusByDay, date, 1)
