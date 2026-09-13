@@ -62,18 +62,18 @@ fun PlannerWeekStrip(selected: LocalDate, today: LocalDate, onSelect: (LocalDate
 }
 
 @Composable
-fun PlannerTaskRow(store: PlannerStore, task: PlannerTask, onOpen: () -> Unit, onLongPress: (() -> Unit)? = null) {
+fun PlannerTaskRow(store: PlannerStore, task: PlannerTask, onOpen: () -> Unit, onLongPress: (() -> Unit)? = null, compact: Boolean = false) {
     var actions by rememberSaveable(task.id) { mutableStateOf(false) }
     val toggle = LocalTaskCompletion.current
     if (actions) TaskQuickActions(store, task, { actions = false }, onOpen)
-    Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).combinedClickable(
+    Row(Modifier.fillMaxWidth().heightIn(min = if (compact) 56.dp else 64.dp).combinedClickable(
         onClickLabel = "Открыть дело", onLongClickLabel = "Действия с делом", onClick = onOpen, onLongClick = { onLongPress?.invoke() ?: run { actions = true } }
     ).padding(end = 12.dp), verticalAlignment = Alignment.CenterVertically) {
         CompletionButton(task.completed, task.title) { toggle(task.id) }
-        Column(Modifier.weight(1f).padding(vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Column(Modifier.weight(1f).padding(vertical = if (compact) 6.dp else 10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(task.title, style = MaterialTheme.typography.bodyMedium,
                 textDecoration = if (task.completed) TextDecoration.LineThrough else null)
-            Text(task.startMinutes?.let { timeRange(it, task.durationMinutes) } ?: categoryLabel(task.category),
+            Text(task.startMinutes?.let { timeRange(it, task.durationMinutes) } ?: if (compact) "Без времени" else categoryLabel(task.category),
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Icon(Icons.Rounded.ChevronRight, null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)

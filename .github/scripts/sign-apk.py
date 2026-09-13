@@ -18,7 +18,7 @@ candidates = list((sdk / 'build-tools').glob('*/apksigner'))
 if not candidates:
     raise SystemExit('Android build-tools/apksigner is required.')
 signer = str(sorted(candidates, key=lambda p: tuple(int(n) for n in re.findall(r'\d+', p.parent.name)))[-1])
-output = Path('distribution/PrimePlaner-0.3.0.apk')
+output = Path('distribution/PrimePlaner-0.3.1.apk')
 output.parent.mkdir(exist_ok=True)
 with tempfile.TemporaryDirectory() as directory:
     key = Path(directory) / 'signing.p12'
