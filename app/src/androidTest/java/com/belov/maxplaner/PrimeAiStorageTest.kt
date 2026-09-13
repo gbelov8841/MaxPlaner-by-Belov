@@ -21,16 +21,20 @@ class PrimeAiStorageTest {
                 db.setTarget(NutritionTarget(date, Nutrients(300.0, 30.0, 20.0, 40.0)))
                 db.confirmMemory(ConfirmedMemory("location", MemorySection.PREFERENCES, "Дома", 1000))
                 assertEquals(0.0, db.day(date).consumed.kcal, 0.0)
-                assertTrue(db.editFood(entry, entry.copy(state = FoodState.CONSUMED)))
-                assertFalse(db.editFood(entry, entry.copy(items = listOf(item, item))))
+                val consumed = entry.copy(id = "actual", state = FoodState.CONSUMED, plannedEntryId = entry.id)
+                assertTrue(db.confirmFood(consumed))
+                assertFalse(db.confirmFood(consumed.copy(id = "duplicate-actual")))
+                assertTrue(db.editFood(consumed, consumed.copy(items = listOf(item.copy(portion = "уточнено")))))
+                assertFalse(db.editFood(consumed, consumed.copy(items = listOf(item, item))))
             }
             PrimeLocalStore(context, name).use { db ->
-                assertEquals(1, db.entries(date).size); assertEquals(100.0, db.day(date).consumed.kcal, 0.0)
+                assertEquals(2, db.entries(date).size); assertEquals(100.0, db.day(date).planned.kcal, 0.0); assertEquals(100.0, db.day(date).consumed.kcal, 0.0)
                 assertEquals(200.0, db.day(date).remaining!!.kcal, 0.0)
                 assertNull(db.target(date.plusDays(1)))
                 assertEquals("Дома", db.memory().single().value)
                 db.forgetMemory("location"); assertTrue(db.memory().isEmpty())
-                assertTrue(db.deleteFood(entry.id)); assertTrue(db.entries(date).isEmpty())
+                assertTrue(db.deleteFood(entry.id)); assertEquals(100.0, db.day(date).consumed.kcal, 0.0)
+                assertTrue(db.deleteFood("actual")); assertTrue(db.entries(date).isEmpty())
             }
         } finally { context.deleteDatabase(name) }
     }

@@ -16,8 +16,8 @@ data class FoodItem(val name: String, val portion: String, val nutrients: Nutrie
         require(source != FoodSource.AI_ESTIMATE || !uncertainty.isNullOrBlank())
     }
 }
-data class FoodEntry(val id: String, val date: LocalDate, val state: FoodState, val items: List<FoodItem>) {
-    init { require(id.isNotBlank() && items.size in 1..100) }
+data class FoodEntry(val id: String, val date: LocalDate, val state: FoodState, val items: List<FoodItem>, val plannedEntryId: String? = null) {
+    init { require(id.isNotBlank() && items.size in 1..100); require(plannedEntryId == null || (state == FoodState.CONSUMED && plannedEntryId.isNotBlank() && plannedEntryId != id)) }
     val total get() = items.fold(Nutrients.Zero) { total, item -> total + item.nutrients }
 }
 data class NutritionTarget(val date: LocalDate, val nutrients: Nutrients)
