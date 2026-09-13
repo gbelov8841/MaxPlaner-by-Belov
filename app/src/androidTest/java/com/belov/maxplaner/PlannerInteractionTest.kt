@@ -135,6 +135,24 @@ class PlannerInteractionTest {
         }
     }
 
+    @Test fun threeTaskHomeKeepsShortcutsVisible() {
+        val store = PlannerStore(ui.activity)
+        val ids = store.tasks.map { it.id }.toSet()
+        ui.runOnIdle { store.addTask("поесть") }
+        try {
+            ui.activityRule.scenario.recreate()
+            ui.onNodeWithText("Задачи сегодня").assertIsDisplayed()
+            ui.onNodeWithText("Привычки").assertIsDisplayed()
+            ui.onNodeWithText("Фокус").assertIsDisplayed()
+            ui.onNodeWithText("Каталог").assertIsDisplayed()
+            screenshot("home-three-tasks")
+            ui.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Добавить еду"))
+            ui.onNodeWithText("Добавить еду").assertIsDisplayed()
+        } finally {
+            ui.runOnIdle { store.tasks.filter { it.id !in ids }.map { it.id }.forEach(store::deleteTask) }
+        }
+    }
+
     @Test fun homeActionsRemainReachableWithLargeText() {
         ui.runOnUiThread {
             val appearance = AppearanceStore(ui.activity)

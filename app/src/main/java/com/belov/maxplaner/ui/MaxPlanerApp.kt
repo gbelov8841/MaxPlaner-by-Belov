@@ -99,7 +99,7 @@ fun MaxPlanerApp(appearance: AppearanceStore) {
                                 onClick = { navigate(tab.route) }).padding(vertical = 6.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(3.dp)) {
                                 Icon(tab.icon, null, Modifier.size(20.dp), tint = if (selected) p.accent else p.secondaryText)
-                                Text(tab.label, style = MaterialTheme.typography.labelSmall, color = if (selected) p.text else p.secondaryText)
+                                Text(tab.label, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, style = MaterialTheme.typography.labelSmall, color = if (selected) p.text else p.secondaryText)
                             }
                         }
                     }
