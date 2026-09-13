@@ -1,5 +1,12 @@
 package com.belov.maxplaner
 
+import androidx.activity.compose.setContent
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
+import com.belov.maxplaner.ui.MaxPlanerApp
+import com.belov.maxplaner.ui.theme.AppearanceStore
+import com.belov.maxplaner.ui.theme.MaxPlanerTheme
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.ParcelFileDescriptor
@@ -57,7 +64,7 @@ class PlannerInteractionTest {
             ui.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(pack.name))
             ui.onNodeWithText(pack.name).performClick()
             ui.onNodeWithText("Главная").performClick()
-            ui.onNodeWithText("План на сегодня").assertIsDisplayed()
+            ui.onNodeWithText("Задачи сегодня").assertIsDisplayed()
             screenshot("${pack.id}-home")
             ui.onNodeWithText("План").performClick()
             ui.onNodeWithText("План дня").assertIsDisplayed()
@@ -128,6 +135,51 @@ class PlannerInteractionTest {
         }
     }
 
+    @Test fun threeTaskHomeKeepsShortcutsVisible() {
+        val store = PlannerStore(ui.activity)
+        val ids = store.tasks.map { it.id }.toSet()
+        ui.runOnIdle { store.addTask("поесть") }
+        try {
+            ui.activityRule.scenario.recreate()
+            ui.onNodeWithText("Задачи сегодня").assertIsDisplayed()
+            ui.onNodeWithText("Привычки").assertIsDisplayed()
+            ui.onNodeWithText("Фокус").assertIsDisplayed()
+            ui.onNodeWithText("Каталог").assertIsDisplayed()
+            screenshot("home-three-tasks")
+            ui.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Добавить еду"))
+            ui.onNodeWithText("Добавить еду").assertIsDisplayed()
+        } finally {
+            ui.runOnIdle { store.tasks.filter { it.id !in ids }.map { it.id }.forEach(store::deleteTask) }
+        }
+    }
+
+    @Test fun homeActionsRemainReachableWithLargeText() {
+        ui.runOnUiThread {
+            val appearance = AppearanceStore(ui.activity)
+            ui.activity.setContent {
+                val density = LocalDensity.current.density
+                CompositionLocalProvider(LocalDensity provides Density(density, fontScale = 1.5f)) {
+                    MaxPlanerTheme(appearance) { MaxPlanerApp(appearance) }
+                }
+            }
+        }
+        ui.onNodeWithText("Задачи сегодня").assertIsDisplayed()
+        screenshot("home-large-text")
+        ui.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Фокус"))
+        ui.onNodeWithText("Фокус").performClick()
+        ui.onNodeWithText("Начать фокус").assertIsDisplayed()
+        ui.onNodeWithText("Закрыть").performClick()
+        ui.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Добавить еду"))
+        ui.onNodeWithText("Добавить еду").performClick()
+        ui.onNodeWithText("Проверь продукты").assertIsDisplayed()
+        ui.onNodeWithText("Отмена").performClick()
+        ui.onNodeWithText("Главная").performClick()
+        ui.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Пока не подключён"))
+        screenshot("home-large-text-actions")
+        ui.onNodeWithText("Пока не подключён").performClick()
+        ui.onNodeWithText("Мой профиль Prime AI").assertIsDisplayed()
+    }
+
     @Test fun dateFromHomeOpensTheSelectedDay() {
         val today = LocalDate.now()
         val other = if (today.dayOfWeek.value == 7) today.minusDays(1) else today.plusDays(1)
@@ -142,7 +194,7 @@ class PlannerInteractionTest {
         val task = PlannerStore(context).tasks.first { it.dueDate == LocalDate.now().toString() }
         ui.onNodeWithText("Главная").performClick()
         ui.onNodeWithContentDescription(task.title).performClick()
-        ui.onNodeWithText("План на сегодня").assertIsDisplayed()
+        ui.onNodeWithText("Задачи сегодня").assertIsDisplayed()
         assertEquals(!task.completed, PlannerStore(context).tasks.first { it.id == task.id }.completed)
         ui.onNodeWithContentDescription(task.title).performClick()
         ui.onNodeWithText(task.title).performClick()

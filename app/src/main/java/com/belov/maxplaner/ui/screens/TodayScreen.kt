@@ -41,54 +41,59 @@ fun TodayScreen(store: PlannerStore, displayName: String, nutrition: com.belov.m
     val greeting = when (LocalTime.now().hour) { in 5..11 -> "Доброе утро,"; in 12..17 -> "Добрый день,"; in 18..22 -> "Добрый вечер,"; else -> "Доброй ночи," }
     val seconds = (store.focusState.session.remainingMillis(store.focusClock) + 999) / 1000
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 20.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item {
             Column {
-                Text("PrimePlaner", style = MaterialTheme.typography.titleLarge, fontFamily = FontFamily.Serif)
-                Text("by Belov", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Spacer(Modifier.height(24.dp))
-                Text(greeting, style = MaterialTheme.typography.bodyMedium)
-                if (displayName.isNotBlank()) Text(displayName, style = MaterialTheme.typography.headlineMedium)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("PrimePlaner", style = MaterialTheme.typography.titleMedium, fontFamily = FontFamily.Serif)
+                    Text("by Belov", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(listOf(greeting, displayName).filter { it.isNotBlank() }.joinToString(" "), style = MaterialTheme.typography.titleMedium)
                 Text(date.format(DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale("ru"))).replaceFirstChar { it.uppercase() },
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Spacer(Modifier.height(8.dp))
+
             }
         }
         item { PlannerWeekStrip(date, date, onOpenPlan) { agendaItems(store.tasks, store.habits, store.trackers, it).size } }
         item {
             PlannerCard(modifier = Modifier.fillMaxWidth()) {
-                PanelHeading("План на сегодня", if (tasks.isEmpty()) "Открыть" else "$done из ${tasks.size}") { onOpenPlan(date) }
+                PanelHeading("Задачи сегодня", if (tasks.isEmpty()) "Открыть" else "$done из ${tasks.size}") { onOpenPlan(date) }
                 if (tasks.isNotEmpty()) PlannerProgressIndicator({ done.toFloat() / tasks.size }, Modifier.fillMaxWidth().padding(horizontal = 14.dp))
                 if (tasks.isEmpty()) Text("День пока свободен. Добавь первое дело.", Modifier.padding(14.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 tasks.take(3).forEachIndexed { index, item ->
-                    PlannerTaskRow(store, item, onOpen = { selectedTaskId = item.id })
+                    PlannerTaskRow(store, item, compact = true, onOpen = { selectedTaskId = item.id })
                     if (index < minOf(tasks.size, 3) - 1) HorizontalDivider(Modifier.padding(horizontal = 14.dp), thickness = .5.dp)
                 }
                 if (tasks.size > 3) TextButton(onClick = { onOpenPlan(date) }, modifier = Modifier.fillMaxWidth()) { Text("Все дела · ${tasks.size}") }
                 InlineAdd { showAdd = true }
             }
         }
-        item { PlannerSurface(modifier = Modifier.fillMaxWidth(), onClick = onOpenAi) {
-            Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("✦  Prime AI", Modifier.weight(1f), style = MaterialTheme.typography.titleSmall)
-                Text("Создать план", style = MaterialTheme.typography.labelSmall)
-                Icon(Icons.Rounded.ChevronRight, null, Modifier.size(18.dp))
-            }
-        } }
-        item { NutritionSummary(nutrition, onOpenNutrition, onAddFood) }
         item {
             val habitText = "${habits.count { date.toString() in it.completedDates }} из ${habits.size}"
             val focusText = "%02d:%02d".format(seconds / 60, seconds % 60)
             if (LocalDensity.current.fontScale > 1.3f) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 HomeShortcut("Привычки", habitText, Icons.Outlined.Spa, Modifier.fillMaxWidth(), onOpenHabits)
                 HomeShortcut("Фокус", focusText, Icons.Outlined.Timer, Modifier.fillMaxWidth()) { showFocus = true }
-                HomeShortcut("Каталог", "Готовые действия", Icons.Outlined.GridView, Modifier.fillMaxWidth()) { showCatalog = true }
+                HomeShortcut("Каталог", "Действия", Icons.Outlined.GridView, Modifier.fillMaxWidth()) { showCatalog = true }
             } else Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 HomeShortcut("Привычки", habitText, Icons.Outlined.Spa, Modifier.weight(1f), onOpenHabits)
                 HomeShortcut("Фокус", focusText, Icons.Outlined.Timer, Modifier.weight(1f)) { showFocus = true }
-                HomeShortcut("Каталог", "Готовые действия", Icons.Outlined.GridView, Modifier.weight(1f)) { showCatalog = true }
+                HomeShortcut("Каталог", "Действия", Icons.Outlined.GridView, Modifier.weight(1f)) { showCatalog = true }
             }
         }
+        item { NutritionSummary(nutrition, onOpenNutrition, onAddFood) }
+        item { PlannerSurface(modifier = Modifier.fillMaxWidth(), onClick = onOpenAi) {
+            Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp).heightIn(min = 32.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Outlined.AutoAwesome, null, Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("Prime AI", style = MaterialTheme.typography.titleSmall)
+                    Text("Пока не подключён", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Icon(Icons.Rounded.ChevronRight, null, Modifier.size(18.dp))
+            }
+        } }
         item {
             PlannerSurface(modifier = Modifier.fillMaxWidth(), onClick = onOpenProgress) {
                 Row(Modifier.padding(14.dp).heightIn(min = 28.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -109,7 +114,7 @@ fun TodayScreen(store: PlannerStore, displayName: String, nutrition: com.belov.m
 @Composable
 private fun HomeShortcut(title: String, subtitle: String, icon: ImageVector, modifier: Modifier, onClick: () -> Unit) {
     PlannerSurface(modifier = modifier, onClick = onClick) {
-        Column(Modifier.padding(horizontal = 6.dp, vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally,
+        Column(Modifier.padding(horizontal = 6.dp, vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Icon(icon, null, Modifier.size(22.dp))
             Text(title, style = MaterialTheme.typography.labelLarge)
